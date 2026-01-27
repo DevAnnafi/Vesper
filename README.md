@@ -4,6 +4,8 @@
 A terminal-based, modal text editor inspired by Vim/Neovim, built from scratch in C using pure termios(no ncurses). The goal is to implement a performant, minimal core editor first, then add advanced features like syntax highlighting, splits and AI-assisted inline suggesstion.
 
 ## Folder Structure
+
+```
 Vesper/
 ├── src/
 │ ├── main.c
@@ -31,6 +33,7 @@ Vesper/
 ├── .gitignore
 ├── Makefile
 └── README.md
+```
 
 ## Core Modules (What Each Folder/File Does)
 

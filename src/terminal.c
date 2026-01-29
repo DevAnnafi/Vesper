@@ -51,11 +51,6 @@ int main()
     		printf("\nYou typed: %c\n", c);
 	}
 
-	// Testing abnormal exit
-	printf("\nNow testing abnormal exit...\n");
-	printf("Calling exit(0) without reaching return statement\n");
-	exit(0);
-
 	// To restore original settings I need to use original_termios variable with tcsetattr() with TCSAFLUSH
 	tcsetattr(STDIN_FILENO, TCSAFLUSH,  &original_termios);
 

@@ -17,8 +17,8 @@ int main()
 	// Copy original variable to new variable
 	new_termios = original_termios;
 
-	// Clear the flag 
-	new_termios.c_lflag &= ~ICANON;
+	// Clear the flag-Modify this so typed characters dont appear automatically 
+	new_termios.c_lflag &= ~(ICANON | ECHO);
 
 	// Apply the modified settings to the terminal
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_termios);

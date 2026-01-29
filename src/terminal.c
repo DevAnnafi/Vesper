@@ -42,6 +42,9 @@ int main()
     		printf("\nYou typed: %c\n", c);
 	}
 
+	// To restore original settings I need to use original_termios variable with tcsetattr() with TCSAFLUSH
+	tcsetattr(STDIN_FILENO, TCSAFLUSH,  &original_termios);
+
 
 	return 0;
 

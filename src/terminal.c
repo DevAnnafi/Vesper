@@ -3,10 +3,19 @@
 #include <stdio.h> 
 #include <stdlib.h>
 
+struct termios original_termios;
+
+void disableRawMode() 
+{ 
+	// restore terminal in this function
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
+}
+
+
 int main() 
 {
-	// The struct termios variable is used to hold the original settings
-	struct termios original_termios;
+	// save original settings
+	atexit(disableRawMode);
 	
 	// Use tcgetattr() to read the current terminal settings into it
 	tcgetattr(STDIN_FILENO, &original_termios);
@@ -41,6 +50,11 @@ int main()
 	} else {
     		printf("\nYou typed: %c\n", c);
 	}
+
+	// Testing abnormal exit
+	printf("\nNow testing abnormal exit...\n");
+	printf("Calling exit(0) without reaching return statement\n");
+	exit(0);
 
 	// To restore original settings I need to use original_termios variable with tcsetattr() with TCSAFLUSH
 	tcsetattr(STDIN_FILENO, TCSAFLUSH,  &original_termios);

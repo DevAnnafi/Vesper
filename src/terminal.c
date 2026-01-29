@@ -17,17 +17,24 @@ int main()
 	// Copy original variable to new variable
 	new_termios = original_termios;
 
-	// Clear the flag-Modify this so typed characters dont appear automatically 
-	new_termios.c_lflag &= ~(ICANON | ECHO);
+	// Clear the flag-Modify this so typed characters dont appear automatically; Disable CTRL+C so it becomes a regular input character 
+	new_termios.c_lflag &= ~(ICANON | ECHO | ISIG);
 
 	// Apply the modified settings to the terminal
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_termios);
 
-	// Test with one character
+	// Test to see if CTRL-C is read as an input character
 	printf("Type a character: ");
+	fflush(stdout);
+
 	char c;
 	read(STDIN_FILENO, &c, 1);
-	printf("\nYou typed: %c\n", c);
+
+	if (c == 3) {
+    		printf("\nYou typed: Ctrl-C (ASCII %d)\n", c);
+	} else {
+    		printf("\nYou typed: %c\n", c);
+	}
 
 
 	return 0;

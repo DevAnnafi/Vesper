@@ -3,6 +3,54 @@
 ## Project Overview
 A terminal-based, modal text editor inspired by Vim/Neovim, built from scratch in C using pure termios(no ncurses). The goal is to implement a performant, minimal core editor first, then add advanced features like syntax highlighting, splits and AI-assisted inline suggesstion.
 
+## Progress
+
+### Step 1 - Terminal Control (Raw Mode)
+**Status:** Complete
+
+Successfully implemented low-level terminal control for raw mode input processing:
+
+- ✅ Disabled canonical mode for character-by-character input
+- ✅ Disabled echo to manually control character display
+- ✅ Disabled signal keys (Ctrl-C, Ctrl-Z) for input capture
+- ✅ Disabled input post-processing (Ctrl-S/Ctrl-Q, CR-to-NL)
+- ✅ Safe terminal restoration on normal exit (`atexit()`)
+- ✅ Terminal restoration on abnormal exit
+- ✅ Terminal recovery after crashes verified
+
+**What I Learned:**
+- POSIX terminal control with `termios` API
+- Managing terminal flags: `ICANON`, `ECHO`, `ISIG`, `IXON`, `ICRNL`
+- Using `tcgetattr()` and `tcsetattr()` for terminal state management
+- Cleanup handlers with `atexit()` for graceful exits
+
+###  Step 2 — Main Editor Loop
+**Status:** In Progress (4/6 complete)
+
+Building the core event loop that drives the editor:
+
+- ✅ Created infinite editor loop
+- ✅ Reading exactly one keypress per iteration
+- ✅ Implemented `EditorState` struct to track cursor and screen dimensions
+- ✅ Clean exit on 'q' command
+- 🔲 Update state based on keypress (implementing cursor movement)
+- 🔲 Redraw screen every loop
+
+**Current Functionality:**
+The editor enters raw mode, processes keypresses in a loop, and exits cleanly when 'q' is pressed. Working on implementing h/j/k/l cursor movement and screen rendering next.
+
+##  Challenges Encountered
+
+### Step 1: Terminal Control
+- **Echo Debugging:** When echo is disabled, debugging becomes difficult since you can't see what you're typing. Had to add temporary `printf()` statements to verify input was being captured.
+- **Terminal State Corruption:** Initially forgot to restore terminal settings on abnormal exits, causing the terminal to remain in raw mode after crashes. Fixed by implementing `atexit()` cleanup.
+- **Signal Handling:** Understanding that `atexit()` doesn't catch segfaults - the terminal restoration worked anyway due to shell cleanup, but learned about the limitations.
+
+### Step 2: Main Editor Loop
+- **Compilation Path Issues:** Had to navigate between working in the `src/` directory vs. root directory for compilation. Learned to use proper relative paths.
+- **Silent Execution:** Initially thought the 'q' quit wasn't working because raw mode disables echo - the program was actually working correctly, just providing no visual feedback.
+- **Header Organization:** Learning to properly separate function declarations (`.h`) from implementations (`.c`) and manage includes across multiple files.
+
 ## Folder Structure
 
 ```
@@ -104,7 +152,7 @@ Helper functions:
 
 ### **Milestone 1: Core Engine**
 
-* Terminal raw mode + main loop
+* ✅ Terminal raw mode + main loop
 * Gap buffer
 * Basic cursor movement
 * Basic typing and backspace

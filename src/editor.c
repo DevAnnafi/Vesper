@@ -17,13 +17,49 @@ void editorLoop()
 	{
 		char c;
 		read(STDIN_FILENO, &c, 1);
-
-		printf("You pressed: %c (ASCII %d)\r\n", c, c);
-		fflush(stdout);
-
+    
 		if (c == 'q') 
 		{
 			break;
 		}
+
+		else if (c == 'h') 
+		{
+			if (state.cursor_x > 0) 
+			{ 
+				state.cursor_x--;
+			}
+		}
+
+		else if (c == 'l') 
+		{
+			if (state.cursor_x < state.screen_cols - 1) 
+			{
+				state.cursor_x++;
+			}
+		}
+
+		else if (c == 'k') 
+		{
+			if(state.cursor_y > 0) 
+			{
+				state.cursor_y--;
+			}
+		}
+
+		else if (c == 'j') 
+		{
+			if(state.cursor_y < state.screen_rows - 1) 
+			{
+				state.cursor_y++;
+
+			}
+		}
+		
+		// Print AFTER updating state
+		printf("Key: %c | Cursor: (%d, %d)\r\n", c, state.cursor_x, state.cursor_y);
+		fflush(stdout);
+	
 	}
+
 }

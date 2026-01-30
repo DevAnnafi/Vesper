@@ -25,7 +25,7 @@ Successfully implemented low-level terminal control for raw mode input processin
 - Cleanup handlers with `atexit()` for graceful exits
 
 ###  Step 2 — Main Editor Loop
-**Status:** In Progress (4/6 complete)
+**Status:** In Progress (5/6 complete)
 
 Building the core event loop that drives the editor:
 
@@ -33,7 +33,7 @@ Building the core event loop that drives the editor:
 - ✅ Reading exactly one keypress per iteration
 - ✅ Implemented `EditorState` struct to track cursor and screen dimensions
 - ✅ Clean exit on 'q' command
-- 🔲 Update state based on keypress (implementing cursor movement)
+- ✅ Update state based on keypress (implementing cursor movement)
 - 🔲 Redraw screen every loop
 
 **Current Functionality:**
@@ -50,6 +50,9 @@ The editor enters raw mode, processes keypresses in a loop, and exits cleanly wh
 - **Compilation Path Issues:** Had to navigate between working in the `src/` directory vs. root directory for compilation. Learned to use proper relative paths.
 - **Silent Execution:** Initially thought the 'q' quit wasn't working because raw mode disables echo - the program was actually working correctly, just providing no visual feedback.
 - **Header Organization:** Learning to properly separate function declarations (`.h`) from implementations (`.c`) and manage includes across multiple files.
+- **State Management:** Had to learn about struct member access with the dot operator (`state.cursor_x`). Initially forgot the `state.` prefix when accessing cursor position variables.
+- **Debug Timing:** Initially printed cursor coordinates before updating state, showing the previous position instead of current. Learned that order matters - read input → update state → display state.
+- **Boundary Checks:** Implemented proper boundary checking to prevent cursor from moving outside screen dimensions (0 to cols-1, 0 to rows-1). This prevents negative coordinates or moving beyond terminal boundaries.
 
 ## Folder Structure
 

@@ -5,18 +5,8 @@
 
 struct termios original_termios;
 
-void disableRawMode() 
-{ 
-	// restore terminal in this function
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
-}
-
-
-int main() 
+void enableRawMode() 
 {
-	// save original settings
-	atexit(disableRawMode);
-	
 	// Use tcgetattr() to read the current terminal settings into it
 	tcgetattr(STDIN_FILENO, &original_termios);
 
@@ -35,26 +25,12 @@ int main()
 	// Apply the modified settings to the terminal
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_termios);
 
-	// Test to see if CTRL-C and CTRL-S is read as an input character
-	printf("Type a character: ");
-	fflush(stdout);
-
-	char c;
-	read(STDIN_FILENO, &c, 1);
-
-	if (c == 9) {
-		printf("\nYou typed: CTRL-S(ASCII %d\n", c);
-	}
-	else if (c == 3) {
-    		printf("\nYou typed: Ctrl-C (ASCII %d)\n", c);
-	} else {
-    		printf("\nYou typed: %c\n", c);
-	}
-
-	// To restore original settings I need to use original_termios variable with tcsetattr() with TCSAFLUSH
-	tcsetattr(STDIN_FILENO, TCSAFLUSH,  &original_termios);
-
-
-	return 0;
-
 }
+
+void disableRawMode() 
+{ 
+	// restore terminal in this function
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
+}
+
+

@@ -1,11 +1,6 @@
-#include <stdio.h>
-#include <unistd.h>
-#include "terminal.h"
+#ifndef EDITOR_H
+#define EDITOR_H
 
-void editorLoop()
-{
-	while (1) 
-	{
+void editorLoop();
 
-	}
-}
+#endif

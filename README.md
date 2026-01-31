@@ -34,7 +34,15 @@ Building the core event loop that drives the editor:
 - ✅ Implemented `EditorState` struct to track cursor and screen dimensions
 - ✅ Clean exit on 'q' command
 - ✅ Update state based on keypress (implementing cursor movement)
-- 🔲 Redraw screen every loop
+- ✅ Redraw screen every loop
+
+**What I Learned:**
+- ANSI escape sequences for terminal control (`\x1b[2J`, `\x1b[H`, `\x1b[ROW;COLUMNH`)
+- Screen clearing and redrawing on every loop iteration
+- Real-time visual feedback for cursor movement
+- Terminal coordinate systems (1-based vs 0-based indexing)
+- Proper update flow: clear → draw → position → read input → update state
+
 
 **Current Functionality:**
 The editor enters raw mode, processes keypresses in a loop, and exits cleanly when 'q' is pressed. Working on implementing h/j/k/l cursor movement and screen rendering next.
@@ -53,6 +61,14 @@ The editor enters raw mode, processes keypresses in a loop, and exits cleanly wh
 - **State Management:** Had to learn about struct member access with the dot operator (`state.cursor_x`). Initially forgot the `state.` prefix when accessing cursor position variables.
 - **Debug Timing:** Initially printed cursor coordinates before updating state, showing the previous position instead of current. Learned that order matters - read input → update state → display state.
 - **Boundary Checks:** Implemented proper boundary checking to prevent cursor from moving outside screen dimensions (0 to cols-1, 0 to rows-1). This prevents negative coordinates or moving beyond terminal boundaries.
+- **ANSI Escape Sequences:** Learning the syntax for terminal control codes:
+  - `\x1b` is the ESC character (ASCII 27)
+  - `\x1b[2J` clears the entire screen
+  - `\x1b[H` moves cursor to home position (0,0)
+  - `\x1b[ROW;COLUMNH` positions cursor at specific coordinates
+- **Coordinate Systems:** Terminal uses 1-based coordinates (starting at 1,1) while internal state uses 0-based (starting at 0,0). Had to add +1 when converting: `cursor_y + 1, cursor_x + 1`
+- **Parameter Order:** Initially reversed row/column order in cursor positioning. The format is `\x1b[ROW;COLUMNH` (y,x) not (x,y).
+- **Screen Redraw Timing:** Learned to redraw at the beginning of the loop (before reading input) so the screen shows current state while waiting for the next keypress.
 
 ## Folder Structure
 

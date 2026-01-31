@@ -15,6 +15,15 @@ void editorLoop()
 
 	while (1)
 	{
+		printf("\x1b[2J");
+		printf("\x1b[H");
+
+		printf("Vesper Rocks!\n");
+
+		printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
+
+		fflush(stdout);
+
 		char c;
 		read(STDIN_FILENO, &c, 1);
     
@@ -56,10 +65,10 @@ void editorLoop()
 			}
 		}
 		
-		// Print AFTER updating state
+		/* Print AFTER updating state
 		printf("Key: %c | Cursor: (%d, %d)\r\n", c, state.cursor_x, state.cursor_y);
 		fflush(stdout);
-	
-	}
+	*/
+	} 
 
 }

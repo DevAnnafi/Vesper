@@ -35,3 +35,15 @@ int buffer_cursor_to_index(GapBuffer *buffer, int cursor_pos)
 		return cursor_pos + (buffer->gap_end - buffer->gap_start);
 	}
 }
+
+void buffer_insert_char(GapBuffer *buffer, char c) 
+{
+	if (buffer->gap_start == buffer->gap_end) 
+	{
+		return;
+	}
+
+	buffer->data[buffer->gap_start] = c;
+
+	buffer->gap_start++
+}

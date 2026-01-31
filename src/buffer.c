@@ -57,3 +57,29 @@ void buffer_delete_char(GapBuffer *buffer)
 
 	buffer->gap_start--;
 }
+
+void buffer_move_cursor_right(GapBuffer *buffer)
+{
+	if (buffer->gap_end >= buffer->capacity) 
+	{
+		return;
+	}
+
+	buffer->data[buffer->gap_start] = buffer->data[buffer->gap_end];
+
+	buffer->gap_start++;
+	buffer->gap_end++;
+}
+
+void buffer_move_cursor_left(GapBuffer *buffer)
+{
+	if (buffer->gap_start == 0)
+	{
+		return;
+	}
+
+	buffer->gap_start--;
+	buffer->gap_end--;
+
+	buffer->data[buffer->gap_end] = buffer->data[buffer->gap_start];
+}

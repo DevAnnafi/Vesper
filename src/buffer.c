@@ -17,7 +17,7 @@ GapBuffer* buffer_create(size_t initial_size) {
 
 	buffer->gap_start = 0;
 	buffer->gap_end = initial_size;
-	buffer->size = initial_size;
+	buffer->capacity = initial_size;
 
 	return buffer;
 
@@ -45,5 +45,15 @@ void buffer_insert_char(GapBuffer *buffer, char c)
 
 	buffer->data[buffer->gap_start] = c;
 
-	buffer->gap_start++
+	buffer->gap_start++;
+}
+
+void buffer_delete_char(GapBuffer *buffer)
+{
+	if (buffer->gap_start == 0)
+	{
+		return;
+	}
+
+	buffer->gap_start--;
 }

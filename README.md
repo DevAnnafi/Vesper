@@ -6,7 +6,7 @@ A terminal-based, modal text editor inspired by Vim/Neovim, built from scratch i
 ## Progress
 
 ### Step 1 - Terminal Control (Raw Mode)
-**Status:** Complete
+**Status:** Complete ✅
 
 Successfully implemented low-level terminal control for raw mode input processing:
 
@@ -25,7 +25,7 @@ Successfully implemented low-level terminal control for raw mode input processin
 - Cleanup handlers with `atexit()` for graceful exits
 
 ###  Step 2 — Main Editor Loop
-**Status:** In Progress (5/6 complete)
+**Status:** Complete ✅
 
 Building the core event loop that drives the editor:
 
@@ -43,9 +43,30 @@ Building the core event loop that drives the editor:
 - Terminal coordinate systems (1-based vs 0-based indexing)
 - Proper update flow: clear → draw → position → read input → update state
 
+### Step 3 — Text Buffer (Gap Buffer)
+**Status:** In Progress (8/10 complete)
+
+Implementing the gap buffer data structure for efficient text editing:
+
+- ✅ Allocated initial buffer
+- ✅ Defined gap_start and gap_end
+- ✅ Mapped cursor to buffer index
+- ✅ Inserted character at cursor
+- ✅ Deleted character before cursor
+- ✅ Moved cursor left/right
+- ✅ Shifted gap when cursor moves
+- ⏳ Grow buffer when gap is full
+- ⏳ Verify no memory corruption
+
+**What I Learned:**
+- Gap buffer data structure fundamentals
+- Mapping logical cursor positions to physical array indices
+- Character movement vs. index manipulation in gap shifting
+- Boundary checking to prevent buffer underflow/overflow
+- Testing buffer operations in isolation before integration
 
 **Current Functionality:**
-The editor enters raw mode, processes keypresses in a loop, and exits cleanly when 'q' is pressed. Working on implementing h/j/k/l cursor movement and screen rendering next.
+The gap buffer can insert and delete characters, and the cursor can move left and right with the gap following it correctly. Next step is implementing dynamic buffer growth when the gap fills up.
 
 ##  Challenges Encountered
 
@@ -69,6 +90,18 @@ The editor enters raw mode, processes keypresses in a loop, and exits cleanly wh
 - **Coordinate Systems:** Terminal uses 1-based coordinates (starting at 1,1) while internal state uses 0-based (starting at 0,0). Had to add +1 when converting: `cursor_y + 1, cursor_x + 1`
 - **Parameter Order:** Initially reversed row/column order in cursor positioning. The format is `\x1b[ROW;COLUMNH` (y,x) not (x,y).
 - **Screen Redraw Timing:** Learned to redraw at the beginning of the loop (before reading input) so the screen shows current state while waiting for the next keypress.
+
+### Step 3: Gap Buffer Implementation
+- **Syntax Errors:** Fixed multiple compilation issues including missing semicolons and missing `#endif` directive in header file.
+- **Struct Field Naming:** Encountered inconsistency between using `size` vs `capacity` - resolved by standardizing on `capacity` throughout the codebase.
+- **Index vs. Character Data:** Initially confused between manipulating indices and copying actual character data when implementing gap shifting. Learned that moving the gap requires copying characters from one side to the other, not just adjusting pointers.
+- **Copy Direction in Gap Shift:** When moving cursor left vs. right, the direction of character copying is opposite:
+  - Moving right: copy FROM `gap_end` TO `gap_start`
+  - Moving left: copy FROM `gap_start` TO `gap_end`
+- **Linker Errors:** Learned to compile both `.c` files together (`gcc test.c buffer.c`) to resolve "undefined symbols" errors.
+- **Format Specifiers:** Fixed warnings by using `%zu` instead of `%d` for `size_t` variables in printf statements.
+- **Header Declarations:** Learned that every function implemented in `.c` must be declared in the corresponding `.h` file for external visibility.
+- **Testing Methodology:** Developed simple test harnesses to verify buffer operations work correctly before integrating with the main editor.
 
 ## Folder Structure
 

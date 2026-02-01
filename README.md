@@ -44,7 +44,7 @@ Building the core event loop that drives the editor:
 - Proper update flow: clear → draw → position → read input → update state
 
 ### Step 3 — Text Buffer (Gap Buffer)
-**Status:** In Progress (8/10 complete)
+**Status:** In Progress (9/10 complete)
 
 Implementing the gap buffer data structure for efficient text editing:
 
@@ -55,18 +55,20 @@ Implementing the gap buffer data structure for efficient text editing:
 - ✅ Deleted character before cursor
 - ✅ Moved cursor left/right
 - ✅ Shifted gap when cursor moves
-- ⏳ Grow buffer when gap is full
+- ✅ Grow buffer when gap is full
 - ⏳ Verify no memory corruption
 
 **What I Learned:**
 - Gap buffer data structure fundamentals
 - Mapping logical cursor positions to physical array indices
+- Dynamic memory reallocation with `realloc()` and safe error handling
+- Moving memory blocks with `memmove()` to shift text during buffer growth
 - Character movement vs. index manipulation in gap shifting
 - Boundary checking to prevent buffer underflow/overflow
 - Testing buffer operations in isolation before integration
 
 **Current Functionality:**
-The gap buffer can insert and delete characters, and the cursor can move left and right with the gap following it correctly. Next step is implementing dynamic buffer growth when the gap fills up.
+The gap buffer can insert and delete characters, and the cursor can move left and right with the gap following it correctly. The gap buffer supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full. Need to run comprehensive memory corruption tests before marking complete.
 
 ##  Challenges Encountered
 
@@ -101,6 +103,13 @@ The gap buffer can insert and delete characters, and the cursor can move left an
 - **Linker Errors:** Learned to compile both `.c` files together (`gcc test.c buffer.c`) to resolve "undefined symbols" errors.
 - **Format Specifiers:** Fixed warnings by using `%zu` instead of `%d` for `size_t` variables in printf statements.
 - **Header Declarations:** Learned that every function implemented in `.c` must be declared in the corresponding `.h` file for external visibility.
+- **Safe Memory Reallocation:** Initially assigned `realloc()` result directly to `buffer->data`, which would lose the original pointer if realloc failed. Learned to assign to a temporary variable first, check for NULL, then update the original pointer.
+- **Buffer Growth Logic:** Had to carefully think through the math for moving text after reallocation:
+  - `chars_to_move = old_capacity - old_gap_end` (text after the old gap)
+  - `new_gap_end = new_capacity - chars_to_move` (where that text goes in the new buffer)
+  - Order matters: calculate `chars_to_move` first, then use it to calculate `new_gap_end`
+- **Variable Declaration Order:** Got compilation error when using `chars_to_move` before declaring it - learned that variables must be declared before use (line 104 vs 105).
+- **Missing Header Includes:** Forgot to `#include <string.h>` for `memmove()`, resulting in implicit function declaration errors.
 - **Testing Methodology:** Developed simple test harnesses to verify buffer operations work correctly before integrating with the main editor.
 
 ## Folder Structure

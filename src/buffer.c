@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "buffer.h"
@@ -101,7 +102,6 @@ void buffer_grow(GapBuffer *buffer)
 
 	buffer->data = new_data;
 
-	// TODO: Move text and update gap_end and capacity
 	size_t chars_to_move = old_capacity - old_gap_end;
 	size_t new_gap_end = new_capacity - chars_to_move;
 
@@ -111,6 +111,19 @@ void buffer_grow(GapBuffer *buffer)
 
 	buffer->gap_end = new_gap_end;
 	buffer->capacity = new_capacity;
-
 	
+}
+
+void buffer_print_debug(GapBuffer *buffer) {
+    printf("Buffer contents: [");
+    for (size_t i = 0; i < buffer->capacity; i++) {
+        if (i >= buffer->gap_start && i < buffer->gap_end) {
+            printf("_");  // Show gap as underscore
+        } else {
+            printf("%c", buffer->data[i]);
+        }
+    }
+    printf("]\n");
+    printf("gap_start=%zu, gap_end=%zu, capacity=%zu\n", 
+           buffer->gap_start, buffer->gap_end, buffer->capacity);
 }

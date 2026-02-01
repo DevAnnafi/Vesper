@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "buffer.h"
 
 GapBuffer* buffer_create(size_t initial_size) {
@@ -40,7 +41,7 @@ void buffer_insert_char(GapBuffer *buffer, char c)
 {
 	if (buffer->gap_start == buffer->gap_end) 
 	{
-		return;
+		buffer_grow(buffer);
 	}
 
 	buffer->data[buffer->gap_start] = c;
@@ -82,4 +83,34 @@ void buffer_move_cursor_left(GapBuffer *buffer)
 	buffer->gap_end--;
 
 	buffer->data[buffer->gap_end] = buffer->data[buffer->gap_start];
+}
+
+void buffer_grow(GapBuffer *buffer) 
+{
+	size_t old_capacity = buffer->capacity;
+	size_t old_gap_end = buffer->gap_end;
+
+	size_t new_capacity = buffer->capacity * 2;
+	
+	char *new_data = realloc(buffer->data, new_capacity * sizeof(char));
+
+	if(new_data == NULL) 
+	{
+		return;
+	}
+
+	buffer->data = new_data;
+
+	// TODO: Move text and update gap_end and capacity
+	size_t chars_to_move = old_capacity - old_gap_end;
+	size_t new_gap_end = new_capacity - chars_to_move;
+
+	memmove(&buffer->data[new_gap_end],
+	       &buffer->data[old_gap_end],
+	       chars_to_move);
+
+	buffer->gap_end = new_gap_end;
+	buffer->capacity = new_capacity;
+
+	
 }

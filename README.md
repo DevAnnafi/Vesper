@@ -1,7 +1,7 @@
 ## Project: Vesper
 
 ## Project Overview
-A terminal-based, modal text editor inspired by Vim/Neovim, built from scratch in C using pure termios(no ncurses). The goal is to implement a performant, minimal core editor first, then add advanced features like syntax highlighting, splits and AI-assisted inline suggesstion.
+A terminal-based, modal text editor inspired by Vim/Neovim, built from scratch in C using pure termios (no ncurses). The goal is to implement a performant, minimal core editor first, then add advanced features like syntax highlighting, splits and AI-assisted inline suggestion.
 
 ## Progress
 
@@ -27,7 +27,7 @@ Successfully implemented low-level terminal control for raw mode input processin
 ###  Step 2 — Main Editor Loop
 **Status:** Complete ✅
 
-Building the core event loop that drives the editor:
+Built the core event loop that drives the editor:
 
 - ✅ Created infinite editor loop
 - ✅ Reading exactly one keypress per iteration
@@ -44,9 +44,9 @@ Building the core event loop that drives the editor:
 - Proper update flow: clear → draw → position → read input → update state
 
 ### Step 3 — Text Buffer (Gap Buffer)
-**Status:** In Progress (9/10 complete)
+**Status:** Complete ✅
 
-Implementing the gap buffer data structure for efficient text editing:
+Implemented the gap buffer data structure for efficient text editing:
 
 - ✅ Allocated initial buffer
 - ✅ Defined gap_start and gap_end
@@ -55,20 +55,20 @@ Implementing the gap buffer data structure for efficient text editing:
 - ✅ Deleted character before cursor
 - ✅ Moved cursor left/right
 - ✅ Shifted gap when cursor moves
-- ✅ Grow buffer when gap is full
-- ⏳ Verify no memory corruption
+- ✅ Grew buffer when gap is full
+- ✅ Verified no memory corruption
 
 **What I Learned:**
-- Gap buffer data structure fundamentals
-- Mapping logical cursor positions to physical array indices
+- Gap buffer data structure fundamentals and why it's efficient for text editing
+- Mapping logical cursor positions to physical array indices (accounting for the gap)
 - Dynamic memory reallocation with `realloc()` and safe error handling
 - Moving memory blocks with `memmove()` to shift text during buffer growth
 - Character movement vs. index manipulation in gap shifting
-- Boundary checking to prevent buffer underflow/overflow
-- Testing buffer operations in isolation before integration
+- Building isolated test harnesses to verify data structure correctness before integration
+- Visual debugging with custom print functions to inspect buffer state
 
 **Current Functionality:**
-The gap buffer can insert and delete characters, and the cursor can move left and right with the gap following it correctly. The gap buffer supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full. Need to run comprehensive memory corruption tests before marking complete.
+The gap buffer fully supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full, correctly preserving all text content. Comprehensive testing confirms no memory corruption across all operations. Ready to integrate with the main editor.
 
 ##  Challenges Encountered
 
@@ -98,8 +98,9 @@ The gap buffer can insert and delete characters, and the cursor can move left an
 - **Struct Field Naming:** Encountered inconsistency between using `size` vs `capacity` - resolved by standardizing on `capacity` throughout the codebase.
 - **Index vs. Character Data:** Initially confused between manipulating indices and copying actual character data when implementing gap shifting. Learned that moving the gap requires copying characters from one side to the other, not just adjusting pointers.
 - **Copy Direction in Gap Shift:** When moving cursor left vs. right, the direction of character copying is opposite:
-  - Moving right: copy FROM `gap_end` TO `gap_start`
-  - Moving left: copy FROM `gap_start` TO `gap_end`
+  - Moving right: copy FROM `gap_end` TO `gap_start`, then increment both
+  - Moving left: decrement both first, then copy FROM `gap_start` TO `gap_end`
+  - Getting this backwards resulted in corrupted text
 - **Linker Errors:** Learned to compile both `.c` files together (`gcc test.c buffer.c`) to resolve "undefined symbols" errors.
 - **Format Specifiers:** Fixed warnings by using `%zu` instead of `%d` for `size_t` variables in printf statements.
 - **Header Declarations:** Learned that every function implemented in `.c` must be declared in the corresponding `.h` file for external visibility.
@@ -108,12 +109,17 @@ The gap buffer can insert and delete characters, and the cursor can move left an
   - `chars_to_move = old_capacity - old_gap_end` (text after the old gap)
   - `new_gap_end = new_capacity - chars_to_move` (where that text goes in the new buffer)
   - Order matters: calculate `chars_to_move` first, then use it to calculate `new_gap_end`
-- **Variable Declaration Order:** Got compilation error when using `chars_to_move` before declaring it - learned that variables must be declared before use (line 104 vs 105).
+- **Variable Declaration Order:** Got compilation error when using `chars_to_move` before declaring it - learned that variables must be declared before use.
 - **Missing Header Includes:** Forgot to `#include <string.h>` for `memmove()`, resulting in implicit function declaration errors.
-- **Testing Methodology:** Developed simple test harnesses to verify buffer operations work correctly before integrating with the main editor.
+- **Testing Methodology:** Developed comprehensive testing strategy:
+  - Created small buffers (capacity 5) to quickly trigger edge cases like buffer growth
+  - Wrote `buffer_print_debug()` to visualize gap position and actual buffer contents with underscores showing the gap
+  - Tested insertion, deletion, cursor movement, and growth in various combinations
+  - Verified text integrity after every operation by inspecting actual memory contents
+  - Confirmed expected vs. actual text output matches (e.g., "HelXlo!" after insertion in middle)
+  - All tests passed with no garbage characters, proving no memory corruption
 
 ## Folder Structure
-
 ```
 Vesper/
 ├── src/
@@ -135,7 +141,10 @@ Vesper/
 ├── include/
 │ └── (optional headers if you prefer separate public API)
 ├── tests/
-│ ├── buffer_tests.c
+│ ├── insert_and_delete_char.c
+│ ├── shift_cursor_test.c
+│ ├── test_grow.c
+│ ├── test_memory.c
 │ └── terminal_tests.c
 ├── docs/
 │ └── design_notes.md
@@ -168,10 +177,11 @@ Handles terminal configuration and low-level I/O:
 
 Implements the **gap buffer** text structure:
 
-* insertion
+* insertion with automatic growth
 * deletion
-* moving gap
+* moving gap when cursor moves
 * converting between cursor position and buffer index
+* dynamic memory management
 
 ### `src/render.*`
 
@@ -209,15 +219,15 @@ Helper functions:
 
 ---
 
-## 🧩 Development Roadmap (First Milestones)
+## Development Roadmap (First Milestones)
 
 ### **Milestone 1: Core Engine**
 
 * ✅ Terminal raw mode + main loop
-* Gap buffer
-* Basic cursor movement
-* Basic typing and backspace
-* Full screen redraw
+* ✅ Gap buffer (complete - all functionality implemented and tested)
+* 🔄 Basic cursor movement (gap buffer supports it, need to integrate with editor)
+* ⏳ Basic typing and backspace
+* ⏳ Full screen redraw with text from buffer
 
 ### **Milestone 2: Modal Editing**
 
@@ -244,5 +254,3 @@ Helper functions:
 * Inline suggestions
 * Ghost text rendering
 * Accept/cancel
-
-

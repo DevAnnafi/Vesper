@@ -17,5 +17,6 @@ void buffer_insert_char(GapBuffer *buffer, char c);
 void buffer_delete_char(GapBuffer *buffer);
 void buffer_move_cursor_left(GapBuffer *buffer);
 void buffer_move_cursor_right(GapBuffer *buffer);
+void buffer_grow(GapBuffer *buffer);
 
 #endif

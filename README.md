@@ -70,6 +70,29 @@ Implemented the gap buffer data structure for efficient text editing:
 **Current Functionality:**
 The gap buffer fully supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full, correctly preserving all text content. Comprehensive testing confirms no memory corruption across all operations. Ready to integrate with the main editor.
 
+### Step 4 — Screen Rendering
+**Status:** In Progress (2/7 complete)
+
+Building the screen rendering system to display buffer content:
+
+- ✅ Clear terminal reliably
+- ✅ Render text rows
+- ⏳ Track cursor screen position
+- ⏳ Handle terminal resize
+- ⏳ Implement vertical scrolling
+- ⏳ Implement horizontal scrolling
+- ⏳ Draw status line
+
+**What I Learned:**
+- ANSI escape sequences for clearing (`\x1b[2J`) and cursor positioning (`\x1b[H`)
+- Rendering gap buffer contents by skipping the gap region
+- Iterating through buffer while avoiding gap indices (gap_start to gap_end-1)
+- Separating rendering logic into its own module (render.c/render.h)
+- Module dependencies: render.h needs to include buffer.h to use GapBuffer type
+
+**Current Functionality:**
+Can clear the screen reliably and render text from the gap buffer, correctly skipping over the gap. Text displays properly even after buffer modifications like insertions in the middle.
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -119,6 +142,12 @@ The gap buffer fully supports insertion, deletion, cursor movement, and automati
   - Confirmed expected vs. actual text output matches (e.g., "HelXlo!" after insertion in middle)
   - All tests passed with no garbage characters, proving no memory corruption
 
+### Step 4: Screen Rendering
+- **Header Dependencies:** Initially got "unknown type name 'GapBuffer'" error in render.h. Learned that when a header uses a type from another module, it must include that module's header (`#include "buffer.h"`).
+- **Case Sensitivity in ANSI Codes:** Made typo with lowercase 'j' in `\x1b[2j` - ANSI escape sequences are case-sensitive and require uppercase `\x1b[2J` for screen clearing.
+- **Logical Operators in C:** Initially used `AND` (word) instead of `&&` (C operator) when checking if index is in gap range.
+- **Loop Logic for Gap Skipping:** Had to think carefully about the condition for skipping gap indices: `i >= gap_start && i < gap_end` (not <=, since gap_end is exclusive).
+
 ## Folder Structure
 ```
 Vesper/
@@ -145,6 +174,7 @@ Vesper/
 │ ├── shift_cursor_test.c
 │ ├── test_grow.c
 │ ├── test_memory.c
+│ ├── test_render_text.c
 │ └── terminal_tests.c
 ├── docs/
 │ └── design_notes.md
@@ -187,10 +217,12 @@ Implements the **gap buffer** text structure:
 
 Draws the screen:
 
+* clears terminal
+* renders text from buffer
 * prints visible lines
-* status bar
-* cursor placement
-* handles scrolling offsets
+* status bar (coming soon)
+* cursor placement (coming soon)
+* handles scrolling offsets (coming soon)
 
 ### `src/input.*`
 
@@ -225,6 +257,7 @@ Helper functions:
 
 * ✅ Terminal raw mode + main loop
 * ✅ Gap buffer (complete - all functionality implemented and tested)
+* 🔄 Screen rendering (2/7 complete)
 * 🔄 Basic cursor movement (gap buffer supports it, need to integrate with editor)
 * ⏳ Basic typing and backspace
 * ⏳ Full screen redraw with text from buffer

@@ -1,5 +1,7 @@
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <signal.h>
 #include <stdio.h> 
 #include <stdlib.h>
 
@@ -33,4 +35,15 @@ void disableRawMode()
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
 }
 
+void get_terminal_size(size_t *rows, size_t *cols)
+{
 
+	struct winsize ws;
+
+	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
+
+	*rows = ws.ws_row;
+	*cols = ws.ws_col;
+
+
+}

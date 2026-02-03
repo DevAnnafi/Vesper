@@ -71,14 +71,14 @@ Implemented the gap buffer data structure for efficient text editing:
 The gap buffer fully supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full, correctly preserving all text content. Comprehensive testing confirms no memory corruption across all operations. Ready to integrate with the main editor.
 
 ### Step 4 — Screen Rendering
-**Status:** In Progress (3/7 complete)
+**Status:** In Progress (4/7 complete)
 
 Building the screen rendering system to display buffer content:
 
 - ✅ Clear terminal reliably
 - ✅ Render text rows
 - ✅ Track cursor screen position
-- ⏳ Handle terminal resize
+- ✅ Handle terminal resize
 - ⏳ Implement vertical scrolling
 - ⏳ Implement horizontal scrolling
 - ⏳ Draw status line
@@ -91,9 +91,12 @@ Building the screen rendering system to display buffer content:
 - Module dependencies: render.h needs to include buffer.h to use GapBuffer type
 - Calculating cursor screen position by counting characters and newlines up to gap_start
 - Using pointers to return multiple values from a function (row and col via `size_t *`)
+- Using `ioctl()` with `TIOCGWINSZ` and `struct winsize` to dynamically get terminal dimensions
+- Signal handling with `SIGWINCH` to detect and respond to terminal resize events
+- Registering signal handlers with `signal()` and defining handler functions
 
 **Current Functionality:**
-Can clear the screen reliably, render text from the gap buffer correctly skipping over the gap, and accurately track cursor screen position across multiple lines. Cursor position updates correctly when inserting characters and newlines.
+Can clear the screen reliably, render text from the gap buffer correctly skipping over the gap, accurately track cursor screen position across multiple lines, and dynamically handle terminal resize events. The editor stays responsive after resize without crashing. Text scrolling after resize will be addressed in the vertical/horizontal scrolling steps.
 
 ##  Challenges Encountered
 
@@ -151,6 +154,10 @@ Can clear the screen reliably, render text from the gap buffer correctly skippin
 - **Loop Logic for Gap Skipping:** Had to think carefully about the condition for skipping gap indices: `i >= gap_start && i < gap_end` (not <=, since gap_end is exclusive).
 - **Returning Multiple Values:** Learned to use pointers as output parameters to return multiple values (row and col) from `render_get_cursor_pos()`. Required using `&` when calling and `*` when dereferencing inside the function.
 - **Pointer Increment Syntax:** When incrementing a dereferenced pointer, parentheses are required: `(*row)++` not `*row++`, since `++` has higher precedence than `*`.
+- **`ioctl()` and `struct winsize`:** Learned to use `ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)` to query terminal size. The `struct winsize` members are `ws_row` and `ws_col` (not `rows`/`cols` or `ws_rows`/`ws_cols`) - compiler error messages were helpful in identifying correct names.
+- **Type Mismatch with `size_t`:** `EditorState` had `screen_rows` and `screen_cols` as `int`, but `get_terminal_size()` used `size_t *`. Had to update the struct to use `size_t` for consistency and to eliminate compiler warnings.
+- **Signal Handler Placement:** The `sigwinch_handler()` function must be defined BEFORE `editorLoop()` in `editor.c`, because the compiler needs to know about it when it's referenced in `signal(SIGWINCH, sigwinch_handler)`.
+- **Function Prototype Mismatch:** Had `get_terminal_size()` declared without parameters in `terminal.h` but defined with `size_t *rows, size_t *cols` in `terminal.c`. Learned that declarations must exactly match the function signature.
 
 ## Folder Structure
 ```
@@ -206,6 +213,7 @@ Handles terminal configuration and low-level I/O:
 * key reading
 * cursor positioning
 * screen clearing
+* dynamically gets terminal dimensions via `ioctl()`
 * escape sequence parsing (arrow keys, etc.)
 
 ### `src/buffer.*`
@@ -227,6 +235,15 @@ Draws the screen:
 * tracks cursor screen position
 * status bar (coming soon)
 * vertical/horizontal scrolling (coming soon)
+
+### `src/editor.*`
+
+Manages the editor state and main loop:
+
+* holds `EditorState` with cursor and screen dimensions
+* handles `SIGWINCH` for terminal resize
+* processes keypresses and updates state
+* drives the main editor loop
 
 ### `src/input.*`
 
@@ -261,7 +278,7 @@ Helper functions:
 
 * ✅ Terminal raw mode + main loop
 * ✅ Gap buffer (complete - all functionality implemented and tested)
-* 🔄 Screen rendering (3/7 complete)
+* 🔄 Screen rendering (4/7 complete)
 * 🔄 Basic cursor movement (gap buffer supports it, need to integrate with editor)
 * ⏳ Basic typing and backspace
 * ⏳ Full screen redraw with text from buffer

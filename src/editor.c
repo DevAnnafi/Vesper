@@ -1,17 +1,27 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 #include "terminal.h"
 #include "editor.h"
+#include "render.h"
 
 EditorState state;
+
+void sigwinch_handler(int sig) 
+{
+	get_terminal_size(&state.screen_rows, &state.screen_cols);
+	screen_clear();
+	fflush(stdout);
+
+}
 
 void editorLoop()
 {
 	// Initialize state
 	state.cursor_x = 0;
 	state.cursor_y = 0;
-	state.screen_rows = 24;
-	state.screen_cols = 80;
+	get_terminal_size(&state.screen_rows, &state.screen_cols);
+	signal(SIGWINCH, sigwinch_handler);
 
 	while (1)
 	{

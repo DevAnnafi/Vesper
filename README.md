@@ -71,13 +71,13 @@ Implemented the gap buffer data structure for efficient text editing:
 The gap buffer fully supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full, correctly preserving all text content. Comprehensive testing confirms no memory corruption across all operations. Ready to integrate with the main editor.
 
 ### Step 4 — Screen Rendering
-**Status:** In Progress (2/7 complete)
+**Status:** In Progress (3/7 complete)
 
 Building the screen rendering system to display buffer content:
 
 - ✅ Clear terminal reliably
 - ✅ Render text rows
-- ⏳ Track cursor screen position
+- ✅ Track cursor screen position
 - ⏳ Handle terminal resize
 - ⏳ Implement vertical scrolling
 - ⏳ Implement horizontal scrolling
@@ -89,9 +89,11 @@ Building the screen rendering system to display buffer content:
 - Iterating through buffer while avoiding gap indices (gap_start to gap_end-1)
 - Separating rendering logic into its own module (render.c/render.h)
 - Module dependencies: render.h needs to include buffer.h to use GapBuffer type
+- Calculating cursor screen position by counting characters and newlines up to gap_start
+- Using pointers to return multiple values from a function (row and col via `size_t *`)
 
 **Current Functionality:**
-Can clear the screen reliably and render text from the gap buffer, correctly skipping over the gap. Text displays properly even after buffer modifications like insertions in the middle.
+Can clear the screen reliably, render text from the gap buffer correctly skipping over the gap, and accurately track cursor screen position across multiple lines. Cursor position updates correctly when inserting characters and newlines.
 
 ##  Challenges Encountered
 
@@ -147,6 +149,8 @@ Can clear the screen reliably and render text from the gap buffer, correctly ski
 - **Case Sensitivity in ANSI Codes:** Made typo with lowercase 'j' in `\x1b[2j` - ANSI escape sequences are case-sensitive and require uppercase `\x1b[2J` for screen clearing.
 - **Logical Operators in C:** Initially used `AND` (word) instead of `&&` (C operator) when checking if index is in gap range.
 - **Loop Logic for Gap Skipping:** Had to think carefully about the condition for skipping gap indices: `i >= gap_start && i < gap_end` (not <=, since gap_end is exclusive).
+- **Returning Multiple Values:** Learned to use pointers as output parameters to return multiple values (row and col) from `render_get_cursor_pos()`. Required using `&` when calling and `*` when dereferencing inside the function.
+- **Pointer Increment Syntax:** When incrementing a dereferenced pointer, parentheses are required: `(*row)++` not `*row++`, since `++` has higher precedence than `*`.
 
 ## Folder Structure
 ```
@@ -174,6 +178,7 @@ Vesper/
 │ ├── shift_cursor_test.c
 │ ├── test_grow.c
 │ ├── test_memory.c
+│ ├── test_cursor_pos.c
 │ ├── test_render_text.c
 │ └── terminal_tests.c
 ├── docs/
@@ -217,12 +222,11 @@ Implements the **gap buffer** text structure:
 
 Draws the screen:
 
-* clears terminal
-* renders text from buffer
-* prints visible lines
+* clears terminal reliably
+* renders text from gap buffer
+* tracks cursor screen position
 * status bar (coming soon)
-* cursor placement (coming soon)
-* handles scrolling offsets (coming soon)
+* vertical/horizontal scrolling (coming soon)
 
 ### `src/input.*`
 
@@ -257,7 +261,7 @@ Helper functions:
 
 * ✅ Terminal raw mode + main loop
 * ✅ Gap buffer (complete - all functionality implemented and tested)
-* 🔄 Screen rendering (2/7 complete)
+* 🔄 Screen rendering (3/7 complete)
 * 🔄 Basic cursor movement (gap buffer supports it, need to integrate with editor)
 * ⏳ Basic typing and backspace
 * ⏳ Full screen redraw with text from buffer

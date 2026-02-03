@@ -27,3 +27,22 @@ void render_text(GapBuffer *buffer)
 
 
 }
+
+void render_get_cursor_pos(GapBuffer *buffer, size_t *row, size_t *col)
+{
+	*row = 0;
+	*col = 0;
+
+	for (size_t i = 0; i < buffer->gap_start; i++)
+	{
+		if (buffer->data[i] == '\n')
+		{
+			(*row)++;
+			*col = 0;
+		}
+		else 
+		{
+			(*col)++;
+		}
+	}
+}

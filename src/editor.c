@@ -15,9 +15,23 @@ void sigwinch_handler(int sig)
 
 }
 
+void scroll() 
+{
+	if (state.cursor_y >= state.row_offset + state.screen_rows)
+	{
+		state.row_offset = state.cursor_y - state.screen_rows + 1;
+	}
+
+	if (state.cursor_y < state.row_offset)
+	{
+		state.row_offset = state.cursor_y;
+	}	
+}
+
 void editorLoop()
 {
 	// Initialize state
+	state.row_offset = 0;
 	state.cursor_x = 0;
 	state.cursor_y = 0;
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
@@ -74,6 +88,8 @@ void editorLoop()
 
 			}
 		}
+
+		scroll();
 		
 		/* Print AFTER updating state
 		printf("Key: %c | Cursor: (%d, %d)\r\n", c, state.cursor_x, state.cursor_y);

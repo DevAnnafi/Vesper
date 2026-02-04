@@ -4,6 +4,7 @@
 #include "terminal.h"
 #include "editor.h"
 #include "render.h"
+#include "buffer.h"
 
 EditorState state;
 
@@ -37,12 +38,14 @@ void editorLoop()
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
 	signal(SIGWINCH, sigwinch_handler);
 
+	GapBuffer *buffer = buffer_create(1024);
+
 	while (1)
 	{
 		printf("\x1b[2J");
 		printf("\x1b[H");
 
-		printf("Vesper Rocks!\n");
+		render_text(buffer, state.row_offset, state.screen_rows);
 
 		printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
 

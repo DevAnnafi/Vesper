@@ -1,0 +1,88 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include "terminal.h"
+#include "editor.h"
+#include "render.h"
+#include "buffer.h"
+
+EditorState state;
+
+void sigwinch_handler(int sig)
+{
+    get_terminal_size(&state.screen_rows, &state.screen_cols);
+    screen_clear();
+    fflush(stdout);
+}
+
+void scroll()
+{
+    if (state.cursor_y >= state.row_offset + state.screen_rows)
+    {
+        state.row_offset = state.cursor_y - state.screen_rows + 1;
+    }
+
+    if (state.cursor_y < state.row_offset)
+    {
+        state.row_offset = state.cursor_y;
+    }
+}
+
+int main()
+{
+    enableRawMode();
+    
+    // Initialize state
+    state.row_offset = 0;
+    state.cursor_x = 0;
+    state.cursor_y = 0;
+    get_terminal_size(&state.screen_rows, &state.screen_cols);
+    signal(SIGWINCH, sigwinch_handler);
+
+    GapBuffer *buffer = buffer_create(1024);
+
+    // Add test lines
+    for (int i = 0; i < 50; i++) {
+        char line[50];
+        sprintf(line, "This is line %d\n", i);
+        for (int j = 0; line[j] != '\0'; j++) {
+            buffer_insert_char(buffer, line[j]);
+        }
+    }
+
+    while (1)
+    {
+        printf("\x1b[2J");
+        printf("\x1b[H");
+
+        render_text(buffer, state.row_offset, state.screen_rows);
+
+        printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
+
+        fflush(stdout);
+
+        char c;
+        read(STDIN_FILENO, &c, 1);
+
+        if (c == 'q') 
+        {
+            break;
+        }
+        else if (c == 'j') 
+        {
+            state.cursor_y++;
+        }
+        else if (c == 'k') 
+        {
+            if(state.cursor_y > 0) 
+            {
+                state.cursor_y--;
+            }
+        }
+
+        scroll();
+    }
+    
+    disableRawMode();
+    return 0;
+}

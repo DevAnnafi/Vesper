@@ -64,3 +64,20 @@ void render_get_cursor_pos(GapBuffer *buffer, size_t *row, size_t *col)
         }
     }
 }
+
+void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows)
+{
+    // Move cursor to bottom row
+    printf("\x1b[%zu;1H", screen_rows);
+    
+    // Invert colors for status line (optional but looks nice)
+    printf("\x1b[7m");
+    
+    // Print status info
+    printf("Row: %zu, Col: %zu ", cursor_y, cursor_x);
+    
+    // Reset colors
+    printf("\x1b[m");
+    
+    fflush(stdout);
+}

@@ -71,17 +71,17 @@ Implemented the gap buffer data structure for efficient text editing:
 The gap buffer fully supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full, correctly preserving all text content. Comprehensive testing confirms no memory corruption across all operations. Ready to integrate with the main editor.
 
 ### Step 4 — Screen Rendering
-**Status:** In Progress (4/7 complete)
+**Status:** Complete ✅
 
-Building the screen rendering system to display buffer content:
+Built a complete screen rendering system to display buffer content:
 
 - ✅ Clear terminal reliably
 - ✅ Render text rows
 - ✅ Track cursor screen position
 - ✅ Handle terminal resize
-- ⏳ Implement vertical scrolling
-- ⏳ Implement horizontal scrolling
-- ⏳ Draw status line
+- ✅ Implement vertical scrolling
+- ✅ Implement horizontal scrolling
+- ✅ Draw status line
 
 **What I Learned:**
 - ANSI escape sequences for clearing (`\x1b[2J`) and cursor positioning (`\x1b[H`)
@@ -93,10 +93,12 @@ Building the screen rendering system to display buffer content:
 - Using pointers to return multiple values from a function (row and col via `size_t *`)
 - Using `ioctl()` with `TIOCGWINSZ` and `struct winsize` to dynamically get terminal dimensions
 - Signal handling with `SIGWINCH` to detect and respond to terminal resize events
-- Registering signal handlers with `signal()` and defining handler functions
+- Implementing viewport scrolling with row_offset and col_offset to show different portions of large files
+- Rendering only visible portions of text for efficiency (checking both row and column ranges)
+- Using ANSI escape codes for visual styling (`\x1b[7m` for inverted colors in status line)
 
 **Current Functionality:**
-Can clear the screen reliably, render text from the gap buffer correctly skipping over the gap, accurately track cursor screen position across multiple lines, and dynamically handle terminal resize events. The editor stays responsive after resize without crashing. Text scrolling after resize will be addressed in the vertical/horizontal scrolling steps.
+Complete screen rendering system with viewport scrolling. Can display text from the gap buffer with proper vertical and horizontal scrolling when content exceeds terminal dimensions. Status line at bottom shows real-time cursor position. The editor correctly handles terminal resize events and adjusts the viewport accordingly. Text rendering is optimized to only draw visible content within the current viewport.
 
 ##  Challenges Encountered
 
@@ -137,7 +139,7 @@ Can clear the screen reliably, render text from the gap buffer correctly skippin
   - `chars_to_move = old_capacity - old_gap_end` (text after the old gap)
   - `new_gap_end = new_capacity - chars_to_move` (where that text goes in the new buffer)
   - Order matters: calculate `chars_to_move` first, then use it to calculate `new_gap_end`
-- **Variable Declaration Order:** Got compilation error when using `chars_to_move` before declaring it - learned that variables must be declared before use.
+- **Variable Declaration Order:** Got compilation error using `chars_to_move` before declaring it - learned that variables must be declared before use.
 - **Missing Header Includes:** Forgot to `#include <string.h>` for `memmove()`, resulting in implicit function declaration errors.
 - **Testing Methodology:** Developed comprehensive testing strategy:
   - Created small buffers (capacity 5) to quickly trigger edge cases like buffer growth
@@ -158,6 +160,22 @@ Can clear the screen reliably, render text from the gap buffer correctly skippin
 - **Type Mismatch with `size_t`:** `EditorState` had `screen_rows` and `screen_cols` as `int`, but `get_terminal_size()` used `size_t *`. Had to update the struct to use `size_t` for consistency and to eliminate compiler warnings.
 - **Signal Handler Placement:** The `sigwinch_handler()` function must be defined BEFORE `editorLoop()` in `editor.c`, because the compiler needs to know about it when it's referenced in `signal(SIGWINCH, sigwinch_handler)`.
 - **Function Prototype Mismatch:** Had `get_terminal_size()` declared without parameters in `terminal.h` but defined with `size_t *rows, size_t *cols` in `terminal.c`. Learned that declarations must exactly match the function signature.
+- **Scrolling Logic:** Implementing viewport scrolling required careful thinking about offset calculations:
+  - Vertical: When `cursor_y >= row_offset + screen_rows`, set `row_offset = cursor_y - screen_rows + 1`
+  - Horizontal: When `cursor_x >= col_offset + screen_cols`, set `col_offset = cursor_x - screen_cols + 1`
+  - Had to adjust scroll bounds when status line reduces available text area
+- **Rendering Visible Range:** Initially rendered all text, then learned to check both row AND column ranges:
+  - `if (current_row >= row_offset && current_row < row_offset + screen_rows && current_col >= col_offset && current_col < col_offset + screen_cols)`
+  - Must track both `current_row` and `current_col` while iterating through buffer
+- **Newline Handling:** When encountering `\n`, must increment `current_row` and reset `current_col` to 0. Initially placed the column increment in wrong location relative to newline check.
+- **Status Line Integration:** Reserving bottom row for status line required:
+  - Passing `screen_rows - 1` to `render_text()` instead of `screen_rows`
+  - Adjusting scroll calculation to account for reduced text area
+  - Positioning status line at `screen_rows` (bottom row) with inverted colors
+- **Function Parameter Updates:** When adding col_offset and screen_cols parameters to `render_text()`, had to update:
+  - Function signature in both render.h and render.c
+  - All call sites in editor.c and test files
+  - Missing parameters caused compilation errors
 
 ## Folder Structure
 ```
@@ -187,6 +205,8 @@ Vesper/
 │ ├── test_memory.c
 │ ├── test_cursor_pos.c
 │ ├── test_render_text.c
+│ ├── test_vertical_scrolling.c
+│ ├── test_horizontal_scrolling.c
 │ └── terminal_tests.c
 ├── docs/
 │ └── design_notes.md
@@ -231,17 +251,19 @@ Implements the **gap buffer** text structure:
 Draws the screen:
 
 * clears terminal reliably
-* renders text from gap buffer
+* renders text from gap buffer with viewport scrolling
 * tracks cursor screen position
-* status bar (coming soon)
-* vertical/horizontal scrolling (coming soon)
+* draws status line at bottom with cursor info
+* implements vertical and horizontal scrolling
+* optimizes rendering by only drawing visible content
 
 ### `src/editor.*`
 
 Manages the editor state and main loop:
 
-* holds `EditorState` with cursor and screen dimensions
+* holds `EditorState` with cursor, screen dimensions, and viewport offsets
 * handles `SIGWINCH` for terminal resize
+* implements `scroll()` function for viewport management
 * processes keypresses and updates state
 * drives the main editor loop
 
@@ -278,7 +300,7 @@ Helper functions:
 
 * ✅ Terminal raw mode + main loop
 * ✅ Gap buffer (complete - all functionality implemented and tested)
-* 🔄 Screen rendering (4/7 complete)
+* ✅ Screen rendering (complete - all 7 items done)
 * 🔄 Basic cursor movement (gap buffer supports it, need to integrate with editor)
 * ⏳ Basic typing and backspace
 * ⏳ Full screen redraw with text from buffer

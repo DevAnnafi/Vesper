@@ -7,6 +7,7 @@ typedef struct {
     size_t screen_rows;  // Terminal height
     size_t screen_cols;  // Terminal width
     size_t row_offset; // Line in the file at the top of the screen
+    size_t col_offset;
 } EditorState;
 
 

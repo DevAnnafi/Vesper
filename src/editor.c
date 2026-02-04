@@ -18,9 +18,9 @@ void sigwinch_handler(int sig)
 
 void scroll() 
 {
-	if (state.cursor_y >= state.row_offset + state.screen_rows)
+	if (state.cursor_y >= state.row_offset + state.screen_rows - 1)
 	{
-		state.row_offset = state.cursor_y - state.screen_rows + 1;
+		state.row_offset = state.cursor_y - state.screen_rows + 2;
 	}
 
 	if (state.cursor_y < state.row_offset)
@@ -56,7 +56,8 @@ void editorLoop()
 		printf("\x1b[2J");
 		printf("\x1b[H");
 
-		render_text(buffer, state.row_offset, state.screen_rows, state.col_offset, state.screen_cols);
+		render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
+		draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows);
 
 		printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
 

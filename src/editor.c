@@ -27,12 +27,23 @@ void scroll()
 	{
 		state.row_offset = state.cursor_y;
 	}	
+
+	if (state.cursor_x >= state.row_offset + state.screen_cols)
+	{
+		state.col_offset = state.cursor_x = state.screen_cols + 1;
+	}
+
+	if (state.cursor_x < state.row_offset)
+	{
+		state.row_offset = state.cursor_x;
+	}
 }
 
 void editorLoop()
 {
 	// Initialize state
 	state.row_offset = 0;
+	state.col_offset = 0;
 	state.cursor_x = 0;
 	state.cursor_y = 0;
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
@@ -45,7 +56,7 @@ void editorLoop()
 		printf("\x1b[2J");
 		printf("\x1b[H");
 
-		render_text(buffer, state.row_offset, state.screen_rows);
+		render_text(buffer, state.row_offset, state.screen_rows, state.col_offset, state.screen_cols);
 
 		printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
 

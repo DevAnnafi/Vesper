@@ -127,6 +127,28 @@ Implemented Vim-style modal editing with NORMAL and INSERT modes:
 **Current Functionality:**
 Full modal editing system. Editor starts in NORMAL mode where keys trigger commands (h/j/k/l for movement, q to quit, i to enter INSERT mode). In INSERT mode, all printable characters are inserted into the buffer, backspace deletes characters, and ESC returns to NORMAL mode. Status line displays current mode with visual distinction (inverted colors). Text can be typed, edited, and navigated seamlessly with mode-appropriate behavior.
 
+### Step 6 — Navigation
+**Status:** In Progress 
+
+Adding advanced navigation features for easier cursor movement:
+
+- ✅ h/j/k/l movement (from Step 5)
+- ✅ Arrow key movement
+- ⏳ Line start jump (0 or Home)
+- ⏳ Line end jump ($ or End)
+- ⏳ Page up/down
+- ✅ Keep cursor in bounds
+
+**What I Learned (so far):**
+- Arrow keys send escape sequences: ESC + '[' + direction letter (A/B/C/D)
+- Detecting multi-character input sequences by reading multiple times
+- Distinguishing between ESC key alone vs ESC as part of a sequence
+- Placing arrow key detection before mode checking so arrows work in both modes
+- Using `continue` to skip rest of loop after handling arrow keys
+- Reusing existing movement logic with boundary checks
+
+**Current Functionality:**
+Arrow keys now work in both NORMAL and INSERT modes for cursor movement. Up/Down/Left/Right arrows move the cursor with proper boundary checking, and ESC key still functions correctly for mode switching in INSERT mode.
 
 ##  Challenges Encountered
 
@@ -216,6 +238,12 @@ Full modal editing system. Editor starts in NORMAL mode where keys trigger comma
 - **Printable Character Range:** Initially used `c < 126` instead of `c <= 126` when checking for printable characters. The tilde `~` character (ASCII 126) is printable and should be included in the range.
 - **ASCII Values for Special Keys:** Learned that ESC is ASCII 27 and backspace is ASCII 127 (not 8 as initially thought). These are the values returned by `read()` when those keys are pressed.
 
+### Step 6: Navigation (In Progress)
+- **Escape Sequence Detection:** Learned that arrow keys don't send single characters but sequences of three bytes (ESC, '[', direction). Had to read multiple times after detecting ESC to determine if it's an arrow key or just ESC.
+- **ESC vs Arrow Key Confusion:** Initially struggled with distinguishing between user pressing ESC key (mode switch) vs arrow key sequence (also starts with ESC). Solved by checking if ESC is followed by '[' - if not, it's just ESC key.
+- **Placement of Arrow Detection:** Had to place arrow key handling before mode checking so arrows work in both NORMAL and INSERT modes. If placed inside mode blocks, would need duplicate code.
+- **Continue Statement Usage:** Initially placed `scroll()` and `continue` in wrong locations, causing ESC to be processed twice. Learned that `continue` must be inside the arrow handling block to skip the rest of the loop iteration.
+- **Boundary Checks:** Initially forgot to add boundary checks when copying movement logic, which could cause cursor to go out of bounds. Added same checks as h/j/k/l movement (checking cursor_x/y against screen dimensions).
 
 ## Folder Structure
 ```
@@ -350,6 +378,7 @@ Helper functions:
 * ✅ Insert mode
 * ✅ Escape to normal
 * ✅ Basic navigation commands
+* 🔄 Advanced navigation (arrow keys complete, more features in progress)
 
 ### **Milestone 3: File I/O**
 

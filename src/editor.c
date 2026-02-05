@@ -67,6 +67,59 @@ void editorLoop()
 		char c;
 		read(STDIN_FILENO, &c, 1);
 
+		// Check for arrow keys first
+		if (c == 27)
+		{
+			char seq[2];
+			
+			if (read(STDIN_FILENO, &seq[0], 1) == 1) 
+			{
+				if (seq[0] == '[')
+				{
+					if(read(STDIN_FILENO, &seq[1], 1) ==1) 
+					{
+						if(seq[1] == 'A') 
+						{
+							 if(state.cursor_y > 0)
+                                			 {
+                                        			state.cursor_y--;
+                                			 }	
+						}
+
+						else if (seq[1] == 'B') 
+						{
+							 if(state.cursor_y < state.screen_rows - 1)
+                                			 {
+                                        			state.cursor_y++;
+
+                                			 }	
+						}
+
+						else if (seq[1] == 'C')
+						{
+							  if (state.cursor_x < state.screen_cols - 1)
+                                			  {
+                                        			state.cursor_x++;
+                                			  }
+						}
+
+						else if (seq[1] == 'D')
+						{
+							if (state.cursor_x > 0)
+                                			{
+                                        			state.cursor_x--;
+                                			}
+						}	
+					}
+
+					scroll();
+					continue;
+				}
+
+				
+			}
+		}
+
 		if (state.mode == NORMAL)
 		{
     

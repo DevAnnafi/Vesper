@@ -100,6 +100,34 @@ Built a complete screen rendering system to display buffer content:
 **Current Functionality:**
 Complete screen rendering system with viewport scrolling. Can display text from the gap buffer with proper vertical and horizontal scrolling when content exceeds terminal dimensions. Status line at bottom shows real-time cursor position. The editor correctly handles terminal resize events and adjusts the viewport accordingly. Text rendering is optimized to only draw visible content within the current viewport.
 
+### Step 5 — Modal Editing (Vim-like)
+**Status:** Complete ✅
+
+Implemented Vim-style modal editing with NORMAL and INSERT modes:
+
+- ✅ Define editor modes enum
+- ✅ Implement NORMAL mode
+- ✅ Implement INSERT mode
+- ✅ Block text insertion in NORMAL
+- ✅ Allow insertion in INSERT
+- ✅ Mode switch via keypress
+- ✅ Display current mode
+
+**What I Learned:**
+- Using C enums to represent distinct editor states (NORMAL vs INSERT)
+- Mode-based input handling: same key triggers different actions depending on mode
+- Restructuring input handling with nested conditionals (check mode first, then key)
+- ASCII value 27 represents the ESC key for mode switching
+- ASCII value 127 represents backspace on most systems
+- Detecting printable characters with range check (32-126 ASCII)
+- Integrating buffer operations (insert/delete) with user input
+- Updating function signatures across multiple files to pass mode information
+- Cross-module dependencies: render.h needed to include editor.h for EditorMode type
+
+**Current Functionality:**
+Full modal editing system. Editor starts in NORMAL mode where keys trigger commands (h/j/k/l for movement, q to quit, i to enter INSERT mode). In INSERT mode, all printable characters are inserted into the buffer, backspace deletes characters, and ESC returns to NORMAL mode. Status line displays current mode with visual distinction (inverted colors). Text can be typed, edited, and navigated seamlessly with mode-appropriate behavior.
+
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -176,6 +204,18 @@ Complete screen rendering system with viewport scrolling. Can display text from 
   - Function signature in both render.h and render.c
   - All call sites in editor.c and test files
   - Missing parameters caused compilation errors
+
+### Step 5: Modal Editing
+- **Enum Syntax:** Initially used semicolons instead of commas to separate enum values. Learned that enum values are comma-separated (like a list), with the semicolon only at the very end after the type name.
+- **Struct Field Semicolon:** Forgot semicolon after `EditorMode mode` field in struct. Every struct field needs a semicolon, even when using custom types like enums.
+- **Input Handling Restructure:** Had to reorganize existing if-else chain for input handling by wrapping it in mode checks. This wasn't rewriting from scratch, just adding an outer `if (state.mode == NORMAL)` block around existing code and adding a new `else if (state.mode == INSERT)` block.
+- **Missing Closing Brace:** Initially forgot the closing brace `}` for the NORMAL mode block before starting the INSERT mode block. This caused the `else if (state.mode == INSERT)` to be incorrectly nested.
+- **Scroll Function Variable Names:** Had typos in scroll() function using `state.row_offset` instead of `state.col_offset` for horizontal scrolling checks, and used assignment operator `=` instead of subtraction `-` in offset calculation.
+- **Buffer Function Parameters:** When calling `buffer_insert_char()`, initially forgot to pass the character parameter `c`. The function signature is `buffer_insert_char(buffer, c)` not just `buffer_insert_char(buffer)`.
+- **Cross-Module Type Dependencies:** When updating `draw_status_line()` to accept `EditorMode` parameter, render.h needed to `#include "editor.h"` so it knew what the EditorMode type was. Learned about managing header dependencies across modules.
+- **Printable Character Range:** Initially used `c < 126` instead of `c <= 126` when checking for printable characters. The tilde `~` character (ASCII 126) is printable and should be included in the range.
+- **ASCII Values for Special Keys:** Learned that ESC is ASCII 27 and backspace is ASCII 127 (not 8 as initially thought). These are the values returned by `read()` when those keys are pressed.
+
 
 ## Folder Structure
 ```
@@ -301,22 +341,21 @@ Helper functions:
 * ✅ Terminal raw mode + main loop
 * ✅ Gap buffer (complete - all functionality implemented and tested)
 * ✅ Screen rendering (complete - all 7 items done)
-* 🔄 Basic cursor movement (gap buffer supports it, need to integrate with editor)
-* ⏳ Basic typing and backspace
-* ⏳ Full screen redraw with text from buffer
+* ✅ Basic typing and backspace
+* ✅ Full screen redraw with text from buffer
 
 ### **Milestone 2: Modal Editing**
 
-* Normal mode
-* Insert mode
-* Escape to normal
-* Basic navigation commands
+* ✅ Normal mode
+* ✅ Insert mode
+* ✅ Escape to normal
+* ✅ Basic navigation commands
 
 ### **Milestone 3: File I/O**
 
-* Open file
-* Save file
-* Command mode `:w`, `:q`, `:wq`
+* (TODO) Open file
+* (TODO) Save file
+* (TODO) Command mode `:w`, `:q`, `:wq`
 
 ### **Milestone 4: Advanced Features (optional)**
 

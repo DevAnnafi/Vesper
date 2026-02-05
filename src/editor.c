@@ -109,7 +109,28 @@ void editorLoop()
                                 			{
                                         			state.cursor_x--;
                                 			}
-						}	
+						}
+
+						else if (seq[1] == 'H')
+						{
+							state.cursor_x = 0;
+							scroll();
+							continue;
+						}
+
+						else if (seq[1] == '1')
+						{
+							char seq2;
+							if (read(STDIN_FILENO, &seq2, 1) == 1) 
+							{
+								if (seq2 == '~')
+								{
+									state.cursor_x = 0;
+									scroll();
+									continue;
+								}
+							}
+						}
 					}
 
 					scroll();
@@ -159,6 +180,11 @@ void editorLoop()
 					state.cursor_y++;
 
 				}
+			}
+
+			else if (c == '0') 
+			{
+				state.cursor_x = 0;
 			}
 
 		else if (c == 'i')

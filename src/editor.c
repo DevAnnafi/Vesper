@@ -131,6 +131,32 @@ void editorLoop()
 								}
 							}
 						}
+
+						else if (seq[1] == 'F') 
+						{
+    							// End key: ESC [ F
+    							size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
+    							state.cursor_x = line_length;
+    							scroll();
+    							continue;
+						}
+
+						else if (seq[1] == '4') 
+						{
+    							// Might be End key (ESC [ 4 ~)
+    							char seq2;
+    							if (read(STDIN_FILENO, &seq2, 1) == 1) 
+							{
+        							if (seq2 == '~') 
+								{
+            								// It's End key!
+            								size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
+            								state.cursor_x = line_length;
+            								scroll();
+            								continue;
+        							}
+    							 }
+						 }
 					}
 
 					scroll();
@@ -185,6 +211,12 @@ void editorLoop()
 			else if (c == '0') 
 			{
 				state.cursor_x = 0;
+			}
+
+			else if (c == '$')
+			{
+				size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
+    				state.cursor_x = line_length;
 			}
 
 		else if (c == 'i')

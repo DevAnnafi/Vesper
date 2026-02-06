@@ -19,6 +19,6 @@ typedef struct {
 } EditorState;
 
 
-void editorLoop();
+void editorLoop(char *filename);
 
 #endif

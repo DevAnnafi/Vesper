@@ -19,5 +19,6 @@ void buffer_move_cursor_left(GapBuffer *buffer);
 void buffer_move_cursor_right(GapBuffer *buffer);
 void buffer_grow(GapBuffer *buffer);
 void buffer_print_debug(GapBuffer *buffer);
+size_t buffer_get_line_length(GapBuffer *buffer, size_t line_number);
 
 #endif

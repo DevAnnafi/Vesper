@@ -127,3 +127,49 @@ void buffer_print_debug(GapBuffer *buffer) {
     printf("gap_start=%zu, gap_end=%zu, capacity=%zu\n", 
            buffer->gap_start, buffer->gap_end, buffer->capacity);
 }
+
+size_t buffer_get_line_length(GapBuffer *buffer, size_t line_number)
+{
+	size_t current_row = 0;
+	size_t column_count = 0;
+
+	for (size_t i = 0; i < buffer->capacity; i++)
+	{
+		if (i >= buffer->gap_start && i < buffer->gap_end)
+		{
+			continue;
+		}
+
+		char c = buffer->data[i];
+		
+		if (current_row == line_number)
+		{
+    			// We're on the line we want!
+    			// Check if this character is newline
+    			if (c == '\n')
+    			{
+        			// Found end of line - return the count
+        			return column_count;
+    			}
+    			else
+    			{
+        		// Still on the line - count this character
+        		column_count++;
+    			}
+		}
+		
+		else
+		{
+    			// We're on a different row
+    			// Check if newline (move to next row)
+    			if (c == '\n')
+    			{
+        		current_row++;
+    			}
+		}
+	}
+
+	return column_count;
+
+	}
+

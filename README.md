@@ -134,9 +134,9 @@ Adding advanced navigation features for easier cursor movement:
 
 - ✅ h/j/k/l movement (from Step 5)
 - ✅ Arrow key movement
-- ⏳ Line start jump (0 or Home)
-- ⏳ Line end jump ($ or End)
-- ⏳ Page up/down
+- ✅ Line start jump (0 or Home)
+- ✅ Line end jump ($ or End)
+- ✅ Page up/down
 - ✅ Keep cursor in bounds
 
 **What I Learned (so far):**
@@ -146,9 +146,14 @@ Adding advanced navigation features for easier cursor movement:
 - Placing arrow key detection before mode checking so arrows work in both modes
 - Using `continue` to skip rest of loop after handling arrow keys
 - Reusing existing movement logic with boundary checks
+- Home and End keys send different escape sequences depending on terminal (ESC[H or ESC[1~ for Home, ESC[F or ESC[4~ for End)
+- Page Up/Down keys also use escape sequences (ESC[5~ and ESC[6~)
+- Creating helper functions to encapsulate buffer operations: `buffer_get_line_length()` counts characters until newline, `buffer_get_total_lines()` counts newlines in entire buffer
+- Calculating line boundaries by scanning buffer and counting characters/newlines
+- Handling edge cases in page navigation: jumping to first/last line when out of bounds
 
 **Current Functionality:**
-Arrow keys now work in both NORMAL and INSERT modes for cursor movement. Up/Down/Left/Right arrows move the cursor with proper boundary checking, and ESC key still functions correctly for mode switching in INSERT mode.
+Complete navigation system with multiple input methods. Arrow keys, h/j/k/l, and Page Up/Down all work for vertical/horizontal movement. Home/0 keys jump to line start, End/$ keys jump to line end. All navigation respects screen boundaries and works in both NORMAL and INSERT modes. Page navigation jumps by screen height with proper boundary checking.
 
 ##  Challenges Encountered
 
@@ -244,6 +249,12 @@ Arrow keys now work in both NORMAL and INSERT modes for cursor movement. Up/Down
 - **Placement of Arrow Detection:** Had to place arrow key handling before mode checking so arrows work in both NORMAL and INSERT modes. If placed inside mode blocks, would need duplicate code.
 - **Continue Statement Usage:** Initially placed `scroll()` and `continue` in wrong locations, causing ESC to be processed twice. Learned that `continue` must be inside the arrow handling block to skip the rest of the loop iteration.
 - **Boundary Checks:** Initially forgot to add boundary checks when copying movement logic, which could cause cursor to go out of bounds. Added same checks as h/j/k/l movement (checking cursor_x/y against screen dimensions).
+- **Multiple Escape Sequences per Key:** Discovered that Home and End keys can send different sequences depending on terminal type. Had to handle both ESC[H and ESC[1~ for Home, and both ESC[F and ESC[4~ for End.
+- **Line Length Calculation:** For jumping to end of line, needed to scan buffer to find where current line ends. Created `buffer_get_line_length()` helper function that iterates through buffer, skipping gap, counting characters until hitting newline.
+- **Line Counting Logic:** Implemented `buffer_get_total_lines()` by iterating through entire buffer and counting newline characters. Started count at 1 since empty file has 1 line, then increment for each '\n'.
+- **Page Navigation Boundaries:** Had to handle edge cases where Page Down would jump past end of file or Page Up would go negative. Used conditional logic to clamp cursor_y to valid range (0 to total_lines - 1).
+- **Four-Character Sequences:** Page Up (ESC[5~) and Page Down (ESC[6~) are 4-character sequences, requiring an extra read() call after detecting '5' or '6' to verify the trailing '~'.
+- **Missing Braces and Variables:** Ran into compilation errors from missing opening braces for else-if blocks and using undeclared variables (like `line_length` in wrong scope). Had to carefully match all braces and declare variables in correct scope.
 
 ## Folder Structure
 ```
@@ -378,7 +389,7 @@ Helper functions:
 * ✅ Insert mode
 * ✅ Escape to normal
 * ✅ Basic navigation commands
-* 🔄 Advanced navigation (arrow keys complete, more features in progress)
+* ✅ Advanced navigation (arrow keys complete, more features in progress)
 
 ### **Milestone 3: File I/O**
 

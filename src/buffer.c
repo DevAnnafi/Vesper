@@ -171,5 +171,29 @@ size_t buffer_get_line_length(GapBuffer *buffer, size_t line_number)
 
 	return column_count;
 
+}
+
+size_t buffer_get_total_lines(GapBuffer *buffer)
+{
+	size_t line_count = 1;
+
+	for (size_t i = 0; i < buffer->capacity; i++)
+	{
+		if (i >= buffer->gap_start && i < buffer->gap_end)
+                 {
+                         continue;
+                 }
+
+		// Count \n amount of characters
+
+		char c = buffer->data[i];
+
+		if (c == '\n')
+		{
+			line_count++;
+		}
 	}
+
+	return line_count;
+}
 

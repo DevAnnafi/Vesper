@@ -38,7 +38,7 @@ void scroll()
         }
 }
 
-void editorLoop()
+void editorLoop(char *filename)
 {
         // Initialize state
         state.row_offset = 0;

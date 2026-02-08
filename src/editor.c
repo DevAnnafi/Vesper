@@ -39,8 +39,40 @@ void scroll()
         }
 }
 
+void save_file(char *filename, GapBuffer *buffer)
+{
+	if (filename == NULL) 
+	{
+		return;
+	}
+
+	FILE *fp = fopen(filename, "w");
+
+	if (fp == NULL)
+	{
+		return;
+	}
+
+	for(size_t i = 0; i < buffer->capacity; i++)
+	{		
+		if(i >= buffer->gap_start && i < buffer->gap_end)
+		{
+			continue;
+		}
+
+		char c = buffer->data[i];
+		fputc(c, fp);
+
+	}
+
+	fclose(fp);
+}
+
 void editorLoop(char *filename)
 {
+
+	char *current_filename = filename;
+
         // Initialize state
         state.row_offset = 0;
         state.col_offset = 0;
@@ -98,6 +130,13 @@ void editorLoop(char *filename)
 
                 char c;
                 read(STDIN_FILENO, &c, 1);
+
+		if (c == 19)
+		{
+			save_file(filename, buffer);
+			scroll();
+			continue;
+		}
 
                 // Check for arrow keys first
                 if (c == 27)

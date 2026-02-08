@@ -65,7 +65,7 @@ void render_get_cursor_pos(GapBuffer *buffer, size_t *row, size_t *col)
     }
 }
 
-void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, EditorMode mode)
+void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, EditorMode mode, char *message)
 {
     // Move cursor to bottom row
     printf("\x1b[%zu;1H", screen_rows);
@@ -86,6 +86,12 @@ void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, Edit
     
     // Print status info
     printf("Row: %zu, Col: %zu ", cursor_y, cursor_x);
+
+    // Show message if present
+    if (message != NULL && message[0] != '\0')
+	{
+		printf(" | %s", message);
+	}
     
     // Reset colors
     printf("\x1b[m");

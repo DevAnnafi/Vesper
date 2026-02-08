@@ -5,6 +5,7 @@ typedef enum
 {
 	NORMAL,
 	INSERT,
+	COMMAND,
 
 } EditorMode;
 
@@ -17,6 +18,8 @@ typedef struct {
     size_t col_offset;
     EditorMode mode;
     char *message;
+    char command_buffer[256];
+    size_t command_length;
 } EditorState;
 
 

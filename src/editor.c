@@ -83,6 +83,8 @@ void editorLoop(char *filename)
         state.cursor_y = 0;
         state.mode = NORMAL;
 	state.message = NULL;
+	state.command_buffer[0] = 0;
+	state.command_length = 0;
         get_terminal_size(&state.screen_rows, &state.screen_cols);
         signal(SIGWINCH, sigwinch_handler);
 
@@ -126,7 +128,7 @@ void editorLoop(char *filename)
                 printf("\x1b[H");
 
                 render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
-                draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message);
+                draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer);
 
                 printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
 
@@ -285,6 +287,12 @@ void editorLoop(char *filename)
                         {
                                 break;
                         }
+			else if (c == ':')
+			{
+				state.mode = COMMAND;
+				state.command_buffer[0] = '\0';
+				state.command_length = 0;
+			}
                         else if (c == 'h')
                         {
                                 if (state.cursor_x > 0)
@@ -349,6 +357,15 @@ void editorLoop(char *filename)
                                 buffer_insert_char(buffer, c);
                         }
                 }
+		else if (state.mode == COMMAND)
+		{
+			if (c == 27)
+			{
+				state.mode = NORMAL;
+				state.command_buffer[0] = '\0';
+				state.command_len = 0;
+			}
+		}
 
                 scroll();
         }

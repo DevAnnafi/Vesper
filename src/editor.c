@@ -39,10 +39,11 @@ void scroll()
         }
 }
 
-void save_file(char *filename, GapBuffer *buffer)
+void save_file(char *filename, GapBuffer *buffer, EditorState *state)
 {
 	if (filename == NULL) 
 	{
+		state->message = "Error: No filename";
 		return;
 	}
 
@@ -50,6 +51,7 @@ void save_file(char *filename, GapBuffer *buffer)
 
 	if (fp == NULL)
 	{
+		state->message = "Error: Cannot write file";
 		return;
 	}
 
@@ -66,6 +68,7 @@ void save_file(char *filename, GapBuffer *buffer)
 	}
 
 	fclose(fp);
+	state->message = "File saved!";
 }
 
 void editorLoop(char *filename)
@@ -79,6 +82,7 @@ void editorLoop(char *filename)
         state.cursor_x = 0;
         state.cursor_y = 0;
         state.mode = NORMAL;
+	state.message = NULL;
         get_terminal_size(&state.screen_rows, &state.screen_cols);
         signal(SIGWINCH, sigwinch_handler);
 
@@ -122,7 +126,7 @@ void editorLoop(char *filename)
                 printf("\x1b[H");
 
                 render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
-                draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode);
+                draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message);
 
                 printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
 
@@ -133,7 +137,7 @@ void editorLoop(char *filename)
 
 		if (c == 19)
 		{
-			save_file(filename, buffer);
+			save_file(filename, buffer, &state);
 			scroll();
 			continue;
 		}
@@ -335,6 +339,10 @@ void editorLoop(char *filename)
                         {
                                 buffer_delete_char(buffer);
                         }
+			else if (c == 13 || c == 10)
+			{
+				buffer_insert_char(buffer, '\n');
+			}
                         // If Character is to be inserted insert the character
                         else if (c >= 32 && c <= 126)
                         {

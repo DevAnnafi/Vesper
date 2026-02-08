@@ -155,6 +155,35 @@ Adding advanced navigation features for easier cursor movement:
 **Current Functionality:**
 Complete navigation system with multiple input methods. Arrow keys, h/j/k/l, and Page Up/Down all work for vertical/horizontal movement. Home/0 keys jump to line start, End/$ keys jump to line end. All navigation respects screen boundaries and works in both NORMAL and INSERT modes. Page navigation jumps by screen height with proper boundary checking.
 
+### Step 7 — File Operations
+**Status:** Complete ✅
+
+Implemented full file I/O system for reading and writing files:
+
+- ✅ Open file from CLI arg
+- ✅ Read file into buffer
+- ✅ Write buffer to disk
+- ✅ Handle file errors safely
+
+**What I Learned:**
+- Command-line argument parsing with `argc` and `argv` in `main()`
+- File I/O in C using `fopen()`, `fread()`, `fwrite()`, `fputc()`, and `fclose()`
+- File modes: `"r"` for reading, `"w"` for writing (creates/overwrites file)
+- Getting file size with `fseek()` and `ftell()`: seek to end, get position, seek back to start
+- Dynamic memory allocation for file contents with `malloc()` and cleanup with `free()`
+- Reading entire file at once vs. character-by-character
+- Writing gap buffer to file by looping through buffer and skipping gap indices
+- Detecting Ctrl+S keypress (ASCII value 19) for save command
+- User feedback system with status messages in Vim style
+- Adding message field to EditorState for displaying errors/success
+- Updating function signatures across multiple files to pass state
+- Handling file errors gracefully: file not found, permission denied, no filename
+- Enter key detection (ASCII 13 or 10) to insert newlines in INSERT mode
+- Different terminals send different codes for Enter (CR vs LF)
+
+**Current Functionality:**
+Complete file operations system. Can open files from command line (`./vesper file.txt`), read contents into gap buffer, edit text with full modal editing and navigation, save changes with Ctrl+S, and receive status feedback. If file doesn't exist on open, starts with empty buffer and creates file on save. Enter key inserts newlines for multi-line editing. Status line displays success ("File saved!") or error messages ("Error: No filename", "Error: Cannot write file") in Vim style.
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -255,6 +284,18 @@ Complete navigation system with multiple input methods. Arrow keys, h/j/k/l, and
 - **Page Navigation Boundaries:** Had to handle edge cases where Page Down would jump past end of file or Page Up would go negative. Used conditional logic to clamp cursor_y to valid range (0 to total_lines - 1).
 - **Four-Character Sequences:** Page Up (ESC[5~) and Page Down (ESC[6~) are 4-character sequences, requiring an extra read() call after detecting '5' or '6' to verify the trailing '~'.
 - **Missing Braces and Variables:** Ran into compilation errors from missing opening braces for else-if blocks and using undeclared variables (like `line_length` in wrong scope). Had to carefully match all braces and declare variables in correct scope.
+
+### Step 7: File Operations
+- **CLI Argument Parsing:** Learned how to accept command-line arguments in `main()` using `argc` and `argv`. `argc` counts arguments, `argv[0]` is program name, `argv[1]` is first argument (filename). Had to update function signatures to pass filename through the program.
+- **File Size Calculation:** Used `fseek(fp, 0, SEEK_END)` to jump to end of file, `ftell(fp)` to get current position (equals file size), then `fseek(fp, 0, SEEK_SET)` to return to beginning. This pattern is necessary because C doesn't have a direct "get file size" function.
+- **Memory Management for File Reading:** Allocated dynamic memory with `malloc(file_size + 1)` for the extra null terminator. Had to remember to check if `malloc()` returned NULL (allocation failed) before using the pointer. Also had to `free()` the memory after inserting characters into buffer to avoid memory leaks.
+- **Writing Gap Buffer to File:** Couldn't just write the entire buffer array because of the gap. Had to loop through buffer indices, skip gap region (`i >= gap_start && i < gap_end`), and write only actual text characters. Used `fputc()` to write one character at a time.
+- **Ctrl+S Detection:** Learned that Ctrl+S sends ASCII value 19 (not 's' or 'S'). Had to add detection before mode checks so save works in both NORMAL and INSERT modes. Initially forgot to pass updated state to save function.
+- **Status Message System:** Added `char *message` field to EditorState for Vim-style status messages. Had to update `draw_status_line()` signature in both `.h` and `.c` files, plus update all call sites. Messages show in status bar: "File saved!" on success, error messages on failure.
+- **Function Signature Updates:** When adding EditorState parameter to `save_file()`, had to pass `&state` (address of state) not just `state`, since function expects a pointer. Also had to update the call from `save_file(filename, buffer)` to `save_file(filename, buffer, &state)`.
+- **Error Handling Strategy:** Decided to handle errors gracefully without crashing: file not found creates empty buffer, save without filename shows error message, permission denied shows error. Used early returns with status messages instead of crashing the program.
+- **Enter Key Implementation:** Initially couldn't create new lines in files. Added detection for ASCII 13 and 10 (Enter key sends different codes on different terminals) to insert `'\n'` character. Had to add this check before the printable character range (32-126) check.
+- **File vs Buffer State:** Had to think about when filename is NULL (started with `./vesper` no args) vs when filename exists. Save function needs to handle both cases - can't save without a filename, but that's not a fatal error.
 
 ## Folder Structure
 ```
@@ -393,9 +434,9 @@ Helper functions:
 
 ### **Milestone 3: File I/O**
 
-* (TODO) Open file
-* (TODO) Save file
-* (TODO) Command mode `:w`, `:q`, `:wq`
+* ✅ Open file
+* ✅ Save file
+* ✅ Command mode `:w`, `:q`, `:wq`
 
 ### **Milestone 4: Advanced Features (optional)**
 

@@ -365,6 +365,7 @@ void editorLoop(char *filename)
 				state.mode = NORMAL;
 				state.command_buffer[0] = '\0';
 				state.command_length = 0;
+				state.message = NULL;
 			}
 
 			else if (c == 127)
@@ -386,13 +387,26 @@ void editorLoop(char *filename)
 			}
 
 			else if (c >= 32 && c <= 126)
-			{	
-				if (state.command_length < 255)
+			{
+				if (state.message != NULL && state.message[0] != '\0')
+				{
+				}
+
+				else if (state.command_length < 255)
 				{
 					state.command_buffer[state.command_length] = c;
 					state.command_length++;
 					state.command_buffer[state.command_length] = '\0';
 				}
+
+				else 
+				{
+					state.command_buffer[0] = '\0';
+					state.command_length = 0;
+
+					state.message = "Command too long";
+				}
+
 			}
 		}
 

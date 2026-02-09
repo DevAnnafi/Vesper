@@ -357,13 +357,42 @@ void editorLoop(char *filename)
                                 buffer_insert_char(buffer, c);
                         }
                 }
+
 		else if (state.mode == COMMAND)
 		{
 			if (c == 27)
 			{
 				state.mode = NORMAL;
 				state.command_buffer[0] = '\0';
-				state.command_len = 0;
+				state.command_length = 0;
+			}
+
+			else if (c == 127)
+			{
+				if (state.command_length > 0)
+				{
+					state.command_length--;
+
+					// add null terminator at current_length position
+					state.command_buffer[state.command_length] = '\0';
+				}
+
+
+			}
+
+			else if (c == 13 || c == 10)
+			{
+				state.mode = NORMAL;
+			}
+
+			else if (c >= 32 && c <= 126)
+			{	
+				if (state.command_length < 255)
+				{
+					state.command_buffer[state.command_length] = c;
+					state.command_length++;
+					state.command_buffer[state.command_length] = '\0';
+				}
 			}
 		}
 

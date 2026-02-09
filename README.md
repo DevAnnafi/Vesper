@@ -184,6 +184,33 @@ Implemented full file I/O system for reading and writing files:
 **Current Functionality:**
 Complete file operations system. Can open files from command line (`./vesper file.txt`), read contents into gap buffer, edit text with full modal editing and navigation, save changes with Ctrl+S, and receive status feedback. If file doesn't exist on open, starts with empty buffer and creates file on save. Enter key inserts newlines for multi-line editing. Status line displays success ("File saved!") or error messages ("Error: No filename", "Error: Cannot write file") in Vim style.
 
+### Step 8 — Command Mode
+**Status:** In Progress (2/7 complete)
+
+Implementing Vim-style command mode for editor commands:
+
+- ✅ Enter command mode
+- ✅ Capture command string
+- ⏳ Parse command
+- ⏳ Implement quit
+- ⏳ Implement save
+- ⏳ Implement save + quit
+- ⏳ Display command errors
+
+**What I Learned:**
+- Adding COMMAND mode to EditorMode enum for three-mode system
+- Detecting colon key (`:`, ASCII 58) to enter COMMAND mode
+- Building command string with dynamic character buffer and null termination
+- Handling backspace (ASCII 127) to delete characters from command buffer
+- Buffer overflow protection with 255 character limit
+- Displaying error messages inline with command in status line
+- Clearing command buffer and ignoring input when error is active
+- Conditional message display based on editor mode
+- Managing state transitions between NORMAL, INSERT, and COMMAND modes
+
+**Current Functionality:**
+COMMAND mode fully captures user input after pressing `:`. Users can type commands, see them appear in the status line, use backspace to edit, and press Enter to execute (parsing pending). Buffer overflow protection shows "Command too long" error and clears buffer when 255 character limit is exceeded. Error messages display inline with command prompt and prevent further input until user presses ESC to cancel.
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -296,6 +323,13 @@ Complete file operations system. Can open files from command line (`./vesper fil
 - **Error Handling Strategy:** Decided to handle errors gracefully without crashing: file not found creates empty buffer, save without filename shows error message, permission denied shows error. Used early returns with status messages instead of crashing the program.
 - **Enter Key Implementation:** Initially couldn't create new lines in files. Added detection for ASCII 13 and 10 (Enter key sends different codes on different terminals) to insert `'\n'` character. Had to add this check before the printable character range (32-126) check.
 - **File vs Buffer State:** Had to think about when filename is NULL (started with `./vesper` no args) vs when filename exists. Save function needs to handle both cases - can't save without a filename, but that's not a fatal error.
+
+### Step 8: Command Mode (In Progress)
+- **Command Mode Integration:** Added third mode (COMMAND) to existing NORMAL/INSERT system. Required careful handling of mode transitions and ensuring `:` key only triggers in NORMAL mode.
+- **Command Buffer Management:** Implemented character-by-character string building with proper null termination after each character. Had to handle backspace correctly by decrementing length and adding null terminator.
+- **Error Message Display Timing:** Initially error message wasn't visible because it was set while still in COMMAND mode but only displayed after exiting. Fixed by showing error inline with command buffer in status line.
+- **Buffer Overflow Handling:** When command exceeded 255 characters, old command text remained visible even after clearing buffer. Fixed by checking for existing error message first and ignoring all input when error is active.
+- **Message Clearing Logic:** Had to carefully manage when to clear error messages - clear on ESC but persist while in COMMAND mode so user can see the error.
 
 ## Folder Structure
 ```

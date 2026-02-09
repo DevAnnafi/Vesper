@@ -81,7 +81,14 @@ void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, Edit
     
     else if (mode == COMMAND)
 	{
-		printf("-- COMMAND -- :%s", command_buffer);
+		if (message != NULL && message[0] != '\0')
+		{
+			printf("-- COMMAND -- ERROR: %s", message);
+		}
+		else 
+		{
+			printf("-- COMMAND -- %s", command_buffer);
+		}
 	}
 
     else 

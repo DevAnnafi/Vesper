@@ -185,31 +185,33 @@ Implemented full file I/O system for reading and writing files:
 Complete file operations system. Can open files from command line (`./vesper file.txt`), read contents into gap buffer, edit text with full modal editing and navigation, save changes with Ctrl+S, and receive status feedback. If file doesn't exist on open, starts with empty buffer and creates file on save. Enter key inserts newlines for multi-line editing. Status line displays success ("File saved!") or error messages ("Error: No filename", "Error: Cannot write file") in Vim style.
 
 ### Step 8 — Command Mode
-**Status:** In Progress (2/7 complete)
+**Status:** Complete
 
 Implementing Vim-style command mode for editor commands:
 
 - ✅ Enter command mode
 - ✅ Capture command string
-- ⏳ Parse command
-- ⏳ Implement quit
-- ⏳ Implement save
-- ⏳ Implement save + quit
-- ⏳ Display command errors
+- ✅ Parse command
+- ✅ Implement quit
+- ✅ Implement save
+- ✅ Implement save + quit
+- ✅ Display command errors
 
 **What I Learned:**
-- Adding COMMAND mode to EditorMode enum for three-mode system
-- Detecting colon key (`:`, ASCII 58) to enter COMMAND mode
-- Building command string with dynamic character buffer and null termination
-- Handling backspace (ASCII 127) to delete characters from command buffer
-- Buffer overflow protection with 255 character limit
-- Displaying error messages inline with command in status line
-- Clearing command buffer and ignoring input when error is active
-- Conditional message display based on editor mode
-- Managing state transitions between NORMAL, INSERT, and COMMAND modes
+- Adding new modes to the EditorMode enum (NORMAL, INSERT, COMMAND)
+- Managing command input buffer with fixed-size array (256 chars)
+- Tracking command length separately from buffer to know where to append
+- Using `strcmp()` for string comparison in C (returns 0 when strings match)
+- Supporting multiple command aliases (`:q` and `:quit`, `:w` and `:write`, `:wq` and `:x`)
+- Parsing commands by checking string equality after user presses Enter
+- Clearing command buffer and returning to NORMAL mode after execution
+- Handling edge cases: empty commands, buffer overflow, unrecognized commands
+- Setting appropriate error messages for user feedback ("This command is not recognized", "Command too long")
+- Integrating command mode with existing save functionality
+- Breaking out of main loop for quit commands vs continuing for save commands
 
 **Current Functionality:**
-COMMAND mode fully captures user input after pressing `:`. Users can type commands, see them appear in the status line, use backspace to edit, and press Enter to execute (parsing pending). Buffer overflow protection shows "Command too long" error and clears buffer when 255 character limit is exceeded. Error messages display inline with command prompt and prevent further input until user presses ESC to cancel.
+Full Vim-style command mode implementation. Press `:` in NORMAL mode to enter COMMAND mode, type commands with visual feedback in status line, press Enter to execute or ESC to cancel. Supports `:q`/`:quit` to exit, `:w`/`:write` to save, `:wq`/`:x` to save and quit. Backspace removes characters from command, with 255 character limit. Unknown commands display error message. Command buffer clears after execution, returning to NORMAL mode.
 
 ##  Challenges Encountered
 
@@ -324,12 +326,17 @@ COMMAND mode fully captures user input after pressing `:`. Users can type comman
 - **Enter Key Implementation:** Initially couldn't create new lines in files. Added detection for ASCII 13 and 10 (Enter key sends different codes on different terminals) to insert `'\n'` character. Had to add this check before the printable character range (32-126) check.
 - **File vs Buffer State:** Had to think about when filename is NULL (started with `./vesper` no args) vs when filename exists. Save function needs to handle both cases - can't save without a filename, but that's not a fatal error.
 
-### Step 8: Command Mode (In Progress)
-- **Command Mode Integration:** Added third mode (COMMAND) to existing NORMAL/INSERT system. Required careful handling of mode transitions and ensuring `:` key only triggers in NORMAL mode.
-- **Command Buffer Management:** Implemented character-by-character string building with proper null termination after each character. Had to handle backspace correctly by decrementing length and adding null terminator.
-- **Error Message Display Timing:** Initially error message wasn't visible because it was set while still in COMMAND mode but only displayed after exiting. Fixed by showing error inline with command buffer in status line.
-- **Buffer Overflow Handling:** When command exceeded 255 characters, old command text remained visible even after clearing buffer. Fixed by checking for existing error message first and ignoring all input when error is active.
-- **Message Clearing Logic:** Had to carefully manage when to clear error messages - clear on ESC but persist while in COMMAND mode so user can see the error.
+### Step 8: Command Mode
+- **Mode Management:** Added COMMAND as third mode to EditorMode enum. Had to carefully handle mode transitions: NORMAL → COMMAND (on `:` key), COMMAND → NORMAL (on ESC or Enter). Each mode now has distinct input handling.
+- **String Comparison in C:** Learned that `==` doesn't work for string comparison in C - must use `strcmp()`. Function returns 0 when strings match, not 1 or true. Initially confused by this but makes sense once understood.
+- **Command Buffer Management:** Used fixed-size array `char command_buffer[256]` with separate `command_length` counter. Had to manually manage null terminators - always set `command_buffer[command_length] = '\0'` after modifying. Forgot this initially and saw garbage characters.
+- **Backspace in Command Mode:** When removing characters, must decrement `command_length` first, then add null terminator at new position. Can't just decrement - need to actually terminate the string or old characters remain visible.
+- **Empty Command Handling:** User pressing Enter with empty command (just `:`) should do nothing, not show error. Added explicit check for empty string to handle this gracefully without cluttering with error messages.
+- **Command Parsing Logic:** Used multiple `strcmp()` calls with `if-else` chain. Each command gets checked in order. Unknown commands fall through to final `else` block which sets error message. Considered switch statement but strings don't work with switch in C.
+- **Supporting Command Aliases:** Implemented both short (`:q`, `:w`) and long (`:quit`, `:write`) versions like Vim. Also added `:x` as alias for `:wq`. Used OR operator in conditions: `strcmp(cmd, "q") == 0 || strcmp(cmd, "quit") == 0`.
+- **Buffer Overflow Protection:** Must check `command_length < 255` before adding character to leave room for null terminator at position 255. Without this check, writing at position 256 would overflow the array (undefined behavior).
+- **State Cleanup:** After executing command, must clear `command_buffer`, reset `command_length` to 0, and switch back to NORMAL mode. Forgetting any of these leaves editor in inconsistent state.
+- **Integrating with Save Function:** Reused existing `save_file()` function for `:w` command. Had to pass correct parameters: `current_filename`, `buffer`, and `&state`. File save status messages automatically show in status line.
 
 ## Folder Structure
 ```

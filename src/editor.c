@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include "terminal.h"
 #include "editor.h"
 #include "render.h"
@@ -383,6 +384,37 @@ void editorLoop(char *filename)
 
 			else if (c == 13 || c == 10)
 			{
+				// Parse the command
+				if (strcmp(state.command_buffer, "q") == 0 || strcmp(state.command_buffer, "quit") == 0)
+				{
+					break;
+				}
+
+				// Save the command
+				else if (strcmp(state.command_buffer, "w") == 0 || strcmp(state.command_buffer, "write") == 0)
+				{
+					save_file(current_filename, buffer, &state);
+				}
+
+				// Save and quit
+				else if (strcmp(state.command_buffer, "wq") == 0 || strcmp(state.command_buffer, "x") == 0)
+				{
+					save_file(current_filename, buffer, &state);
+					break;
+				}
+
+				else if(state.command_buffer[0] == '\0')
+				{
+					
+				}
+
+				else
+				{
+					state.message = "This command is not recognized";
+				}
+
+				state.command_buffer[0] = '\0';
+				state.command_length = 0;
 				state.mode = NORMAL;
 			}
 

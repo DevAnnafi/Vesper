@@ -86,6 +86,10 @@ void editorLoop(char *filename)
 	state.message = NULL;
 	state.command_buffer[0] = 0;
 	state.command_length = 0;
+	state.undo_stack = NULL;
+	state.redo_stack = NULL;
+	state.insert_buffer = NULL;
+	state.insert_start = 0;
         get_terminal_size(&state.screen_rows, &state.screen_cols);
         signal(SIGWINCH, sigwinch_handler);
 

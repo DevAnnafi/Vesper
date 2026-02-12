@@ -1,5 +1,6 @@
 #ifndef EDITOR_H
 #define EDITOR_H
+#include <stdbool.h>
 
 typedef enum 
 {
@@ -17,6 +18,42 @@ typedef struct Action
 	struct Action *next;
 } Action;
 
+typedef enum  
+{
+	OP_INSERT,
+	OP_DELETE
+
+} OpType;
+
+typedef struct 
+{
+	OpType type;
+	char *content;
+	size_t position;
+	size_t cursor_x;
+	size_t cursor_y;
+
+} UndoOperation;
+
+typedef struct 
+{
+	UndoOperation *undo_stack;
+	size_t undo_count;
+	size_t undo_capacity;
+
+	UndoOperation *redo_stack;
+	size_t redo_count;
+	size_t redo_capacity;
+
+	char *current_insert_buffer;
+	size_t current_insert_len;
+	size_t current_insert_capacity;
+	size_t insert_start_pos;
+	size_t insert_start_x;
+	size_t insert_start_y;
+	bool in_insert_session;
+} UndoManager;
+	
 typedef enum 
 {
 	NORMAL,
@@ -40,6 +77,7 @@ typedef struct {
     Action *redo_stack;
     char *insert_buffer;
     size_t insert_start;
+    UndoManager *undo_manager;
 } EditorState;
 
 

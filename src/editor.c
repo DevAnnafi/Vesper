@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "terminal.h"
 #include "editor.h"
 #include "render.h"
@@ -72,6 +73,55 @@ void save_file(char *filename, GapBuffer *buffer, EditorState *state)
 	state->message = "File saved!";
 }
 
+UndoManager* undo_manager_create()
+{
+	UndoManager *um = malloc(sizeof(UndoManager));
+
+	um->undo_stack = malloc(sizeof(UndoOperation) * 10);
+	um->undo_count = 0;
+	um->undo_capacity = 10;
+
+	um->redo_stack = malloc(sizeof(UndoOperation) * 10);
+	um->redo_count = 0;
+	um->redo_capacity = 10;
+
+	um->current_insert_buffer = malloc(256);  // Start with 256 chars
+    	um->current_insert_len = 0;
+    	um->current_insert_capacity = 256;
+    	um->insert_start_pos = 0;
+    	um->insert_start_x = 0;
+    	um->insert_start_y = 0;
+    	um->in_insert_session = false;
+
+    	return um;
+}
+
+void undo_push_operation(UndoManager *um, OpType type, char *content, size_t pos, size_t cx, size_t cy)
+{
+    // Grow stack if needed
+    if (um->undo_count >= um->undo_capacity)
+    {
+        um->undo_capacity *= 2;
+        um->undo_stack = realloc(um->undo_stack, sizeof(UndoOperation) * um->undo_capacity);
+    }
+
+    // Create operation
+    UndoOperation op;
+    op.type = type;
+    op.content = malloc(strlen(content) + 1);
+    strcpy(op.content, content);
+    op.position = pos;
+    op.cursor_x = cx;
+    op.cursor_y = cy;
+
+    // Add to stack
+    um->undo_stack[um->undo_count] = op;
+    um->undo_count++;
+
+    // Clear redo stack (new action invalidates redo)
+    um->redo_count = 0;
+}
+
 void editorLoop(char *filename)
 {
 
@@ -90,6 +140,7 @@ void editorLoop(char *filename)
 	state.redo_stack = NULL;
 	state.insert_buffer = NULL;
 	state.insert_start = 0;
+	state.undo_manager = undo_manager_create();
         get_terminal_size(&state.screen_rows, &state.screen_cols);
         signal(SIGWINCH, sigwinch_handler);
 
@@ -338,6 +389,14 @@ void editorLoop(char *filename)
                         else if (c == 'i')
                         {
                                 state.mode = INSERT;
+
+				state.undo_manager->in_insert_session = true;
+    				state.undo_manager->insert_start_x = state.cursor_x;
+    				state.undo_manager->insert_start_y = state.cursor_y;
+    				state.undo_manager->insert_start_pos = buffer->gap_start;
+    				state.undo_manager->current_insert_len = 0;
+    				
+				state.undo_manager->current_insert_buffer[0] = '\0';
                         }
                 }
                 else if (state.mode == INSERT)
@@ -345,6 +404,21 @@ void editorLoop(char *filename)
                         // If ESC is clicked switch to NORMAL mode
                         if (c == 27)
                         {
+				// Save INSERT operation before switching mode
+    				if (state.undo_manager->in_insert_session && state.undo_manager->current_insert_len > 0)
+    				{
+        				undo_push_operation
+					(
+            				state.undo_manager,
+            				OP_INSERT,
+            				state.undo_manager->current_insert_buffer,
+            				state.undo_manager->insert_start_pos,
+            				state.undo_manager->insert_start_x,
+            				state.undo_manager->insert_start_y
+        				);
+    				}
+
+    				state.undo_manager->in_insert_session = false;
                                 state.mode = NORMAL;
                         }
                         // If BACKSPACE is clicked delete the character
@@ -360,6 +434,28 @@ void editorLoop(char *filename)
                         else if (c >= 32 && c <= 126)
                         {
                                 buffer_insert_char(buffer, c);
+
+				if (state.undo_manager->in_insert_session)
+				{
+    					// Check if buffer needs to grow
+    					if (state.undo_manager->current_insert_len >= state.undo_manager->current_insert_capacity - 1)
+    					{
+        				
+					// Double the capacity
+        				state.undo_manager->current_insert_capacity *= 2;
+        				state.undo_manager->current_insert_buffer = realloc
+					(
+            				state.undo_manager->current_insert_buffer,
+            				state.undo_manager->current_insert_capacity
+        				);
+    					
+					}
+
+   					// Add character
+    					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = c;
+    					state.undo_manager->current_insert_len++;
+    					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
+				}
                         }
                 }
 

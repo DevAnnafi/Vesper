@@ -122,6 +122,137 @@ void undo_push_operation(UndoManager *um, OpType type, char *content, size_t pos
     um->redo_count = 0;
 }
 
+void undo_push_operation_no_clear(UndoManager *um, OpType type, char *content, size_t pos, size_t cx, size_t cy)
+{
+    // Grow stack if needed
+    if (um->undo_count >= um->undo_capacity)
+    {
+        um->undo_capacity *= 2;
+        um->undo_stack = realloc(um->undo_stack, sizeof(UndoOperation) * um->undo_capacity);
+    }
+
+    // Create operation
+    UndoOperation op;
+    op.type = type;
+    op.content = malloc(strlen(content) + 1);
+    strcpy(op.content, content);
+    op.position = pos;
+    op.cursor_x = cx;
+    op.cursor_y = cy;
+
+    // Add to stack
+    um->undo_stack[um->undo_count] = op;
+    um->undo_count++;
+
+    // DON'T clear redo stack here!
+}
+
+void redo_push_operation(UndoManager *um, OpType type, char *content, size_t pos, size_t cx, size_t cy)
+{
+        if (um->redo_count >= um->redo_capacity)
+        {
+                um->redo_capacity *= 2;
+                um->redo_stack = realloc(um->redo_stack, sizeof(UndoOperation) * um->redo_capacity);
+        }
+
+        UndoOperation op;
+        op.type = type;
+        op.content = malloc(strlen(content) + 1);
+        strcpy(op.content, content);
+        op.position = pos;
+        op.cursor_x = cx;
+        op.cursor_y = cy;
+
+        um->redo_stack[um->redo_count] = op;
+        um->redo_count++;
+}
+
+void undo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state) 
+{
+	if (um->undo_count == 0)
+	{
+		state->message = "Nothing to undo";
+		return;
+	}
+
+	um->undo_count--;
+	UndoOperation op = um->undo_stack[um->undo_count];
+
+	if (op.type == OP_INSERT)
+	{
+		size_t len = strlen(op.content);
+
+		for (size_t i = 0; i < len; i++)
+		{
+			buffer_delete_char(buffer);
+		}
+
+		state->cursor_x = op.cursor_x;
+        	state->cursor_y = op.cursor_y;
+	}
+
+	else if (op.type == OP_DELETE)
+	{
+		state->cursor_x = op.cursor_x;
+		state->cursor_y = op.cursor_y;
+
+		size_t len = strlen(op.content);
+
+		for (size_t i = 0; i < len; i++)
+		{
+			char c = op.content[i];
+
+			buffer_insert_char(buffer, c);
+		}
+	}
+
+	state->cursor_x = op.cursor_x;
+	state->cursor_y = op.cursor_y;
+
+	redo_push_operation(um, op.type, op.content, op.position, op.cursor_x, op.cursor_y);
+
+}
+
+void redo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state)
+{
+ 	if (um->redo_count == 0)
+        {
+                state->message = "Nothing to redo";
+                return;
+        }
+
+        um->redo_count--;
+        UndoOperation op = um->redo_stack[um->redo_count];
+
+	state->cursor_x = op.cursor_x;
+	state->cursor_y = op.cursor_y;
+	
+	if (op.type == OP_INSERT)
+        {
+                size_t len = strlen(op.content);
+
+                for (size_t i = 0; i < len; i++)
+                {
+                        char c = op.content[i];
+			buffer_insert_char(buffer, c);
+                }
+        }
+
+	else if (op.type == OP_DELETE)
+	{
+		size_t len = strlen(op.content);
+
+		for (size_t i = 0; i < len; i++)
+		{
+			buffer_delete_char(buffer);
+		}
+	}
+
+	undo_push_operation_no_clear(um, op.type, op.content, op.position, op.cursor_x, op.cursor_y);
+
+
+}
+
 void editorLoop(char *filename)
 {
 
@@ -343,6 +474,14 @@ void editorLoop(char *filename)
                         {
                                 break;
                         }
+			else if (c == 'u')
+			{
+				undo_operation(state.undo_manager, buffer, &state);
+			}
+			else if (c == 18)
+			{
+				redo_operation(state.undo_manager, buffer, &state);
+			}
 			else if (c == ':')
 			{
 				state.mode = COMMAND;
@@ -435,7 +574,28 @@ void editorLoop(char *filename)
 			else if (c == 13 || c == 10)
 			{
 				buffer_insert_char(buffer, '\n');
+
+				// Also track newline in insert buffer
+    				if (state.undo_manager->in_insert_session)
+    				{
+        				// Check if buffer needs to grow
+        				if (state.undo_manager->current_insert_len >= state.undo_manager->current_insert_capacity - 1)
+        				{
+            					state.undo_manager->current_insert_capacity *= 2;
+            					state.undo_manager->current_insert_buffer = realloc
+						(
+                				state.undo_manager->current_insert_buffer,
+                				state.undo_manager->current_insert_capacity
+            					);
+        				}
+
+        				// Add newline
+        				state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\n';
+        				state.undo_manager->current_insert_len++;
+        				state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
+    				}
 			}
+
                         // If Character is to be inserted insert the character
                         else if (c >= 32 && c <= 126)
                         {

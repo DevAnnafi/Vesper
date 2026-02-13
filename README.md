@@ -213,6 +213,32 @@ Implementing Vim-style command mode for editor commands:
 **Current Functionality:**
 Full Vim-style command mode implementation. Press `:` in NORMAL mode to enter COMMAND mode, type commands with visual feedback in status line, press Enter to execute or ESC to cancel. Supports `:q`/`:quit` to exit, `:w`/`:write` to save, `:wq`/`:x` to save and quit. Backspace removes characters from command, with 255 character limit. Unknown commands display error message. Command buffer clears after execution, returning to NORMAL mode.
 
+### Step 9 — Undo/Redo
+**Status:** Complete ✅
+
+Implemented full undo/redo functionality with Vim-style action-level granularity:
+
+- ✅ Decide undo granularity
+- ✅ Record insert operations
+- ✅ Record delete operations
+- ✅ Implement undo stack
+- ✅ Implement redo stack
+- ✅ Restore cursor position
+
+**What I Learned:**
+- Action-level granularity: entire INSERT session is one undo operation
+- Building undo/redo with dual stack architecture
+- Tracking insert operations by recording characters as they're typed
+- Handling newlines in insert buffer to preserve line structure
+- Using linked list-backed dynamic arrays for unlimited undo history
+- Preventing redo stack from being cleared during redo operations
+- Restoring cursor position (screen coordinates) after undo/redo
+- Managing undo manager lifecycle and initialization
+- Difference between undo_push (clears redo) and undo_push_no_clear (preserves redo)
+
+**Current Functionality:**
+Full undo/redo system working. Users can press `u` in NORMAL mode to undo the last action (entire INSERT session or individual command). Press Ctrl+R to redo. Multiple undo/redo operations work correctly. Cursor position is restored to where it was when the action started. Newlines are properly tracked so multi-line inserts undo/redo correctly. New actions clear the redo stack as expected.
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -337,6 +363,13 @@ Full Vim-style command mode implementation. Press `:` in NORMAL mode to enter CO
 - **Buffer Overflow Protection:** Must check `command_length < 255` before adding character to leave room for null terminator at position 255. Without this check, writing at position 256 would overflow the array (undefined behavior).
 - **State Cleanup:** After executing command, must clear `command_buffer`, reset `command_length` to 0, and switch back to NORMAL mode. Forgetting any of these leaves editor in inconsistent state.
 - **Integrating with Save Function:** Reused existing `save_file()` function for `:w` command. Had to pass correct parameters: `current_filename`, `buffer`, and `&state`. File save status messages automatically show in status line.
+
+### Step 9: Undo/Redo
+- **Newline Tracking:** Initially forgot to track newlines (`\n`) in the insert buffer when user pressed Enter. This caused redo to insert "firstsecond" instead of "first\nsecond" on separate lines. Fixed by adding newline character to current_insert_buffer when Enter is pressed.
+- **Redo Stack Clearing:** When redoing an operation, pushing back to undo stack would clear the entire redo stack, preventing multiple redos. Fixed by creating separate `undo_push_operation_no_clear()` function that doesn't clear redo stack.
+- **Function Declaration Order:** Got compiler error because `redo_push_operation()` was called before it was defined. Fixed by rearranging function order or adding forward declaration.
+- **Cursor Position vs Buffer Position:** Screen cursor position (cursor_x, cursor_y) doesn't directly map to buffer index. Storing screen coordinates works because gap buffer always inserts at gap_start, which tracks with cursor movement.
+- **Undo/Redo Logic:** Initially had redo_operation() using undo_stack instead of redo_stack, causing wrong behavior. Fixed by ensuring redo pops from redo_stack and pushes to undo_stack.
 
 ## Folder Structure
 ```
@@ -481,7 +514,7 @@ Helper functions:
 
 ### **Milestone 4: Advanced Features (optional)**
 
-* Undo/redo
+✅ Undo/redo
 * Search (`/pattern`)
 * Syntax highlighting
 * Split windows/tabs

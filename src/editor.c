@@ -425,6 +425,12 @@ void editorLoop(char *filename)
                         else if (c == 127)
                         {
                                 buffer_delete_char(buffer);
+
+				if (state.undo_manager->in_insert_session && state.undo_manager->current_insert_len > 0)
+				{
+					state.undo_manager->current_insert_len--;
+					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
+				}
                         }
 			else if (c == 13 || c == 10)
 			{

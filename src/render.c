@@ -65,7 +65,7 @@ void render_get_cursor_pos(GapBuffer *buffer, size_t *row, size_t *col)
     }
 }
 
-void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, EditorMode mode, char *message, char *command_buffer)
+void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, EditorMode mode, char *message, char *command_buffer, char *search_buffer)
 {
     // Move cursor to bottom row
     printf("\x1b[%zu;1H", screen_rows);
@@ -83,31 +83,35 @@ void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, Edit
 	{
 		if (message != NULL && message[0] != '\0')
 		{
-			printf("-- COMMAND -- ERROR: %s", message);
+			printf(":%s [ERROR: %s]", command_buffer, message);
 		}
 		else 
 		{
-			printf("-- COMMAND -- %s", command_buffer);
+			printf(":%s", command_buffer);
 		}
 	}
+
+    else if (mode == SEARCH)
+    {
+	    printf("/%s", search_buffer);
+    }
 
     else 
     {
         printf(" -- NORMAL -- ");
     }
 
-    if (mode != COMMAND)
+    if (mode != COMMAND && mode != SEARCH)
     {
 
     	printf("Row: %zu, Col: %zu ", cursor_y, cursor_x);
-    }
 
-    // Show message if present
-    if (message != NULL && message[0] != '\0')
+    	// Show message if present
+    	if (message != NULL && message[0] != '\0')
 	{
 		printf(" | %s", message);
 	}
-    
+    }
     // Reset colors
     printf("\x1b[m");
     

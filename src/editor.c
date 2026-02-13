@@ -272,6 +272,8 @@ void editorLoop(char *filename)
 	state.insert_buffer = NULL;
 	state.insert_start = 0;
 	state.undo_manager = undo_manager_create();
+	state.search_buffer[0] = '\0';
+	state.search_length = 0;
         get_terminal_size(&state.screen_rows, &state.screen_cols);
         signal(SIGWINCH, sigwinch_handler);
 
@@ -315,7 +317,7 @@ void editorLoop(char *filename)
                 printf("\x1b[H");
 
                 render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
-                draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer);
+                draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer, state.search_buffer);
 
                 printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
 
@@ -474,6 +476,12 @@ void editorLoop(char *filename)
                         {
                                 break;
                         }
+			else if (c == '/')
+			{
+				state.mode = SEARCH;
+				state.search_buffer[0] = '\0';
+				state.search_length = 0;
+			}
 			else if (c == 'u')
 			{
 				undo_operation(state.undo_manager, buffer, &state);

@@ -59,6 +59,7 @@ typedef enum
 	NORMAL,
 	INSERT,
 	COMMAND,
+	SEARCH
 
 } EditorMode;
 
@@ -78,6 +79,8 @@ typedef struct {
     char *insert_buffer;
     size_t insert_start;
     UndoManager *undo_manager;
+    char search_buffer[256];
+    size_t search_length;
 } EditorState;
 
 

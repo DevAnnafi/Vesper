@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "buffer.h"
 #include <sys/types.h>
 
@@ -263,4 +264,64 @@ void buffer_index_to_screen(GapBuffer *buffer, size_t index, size_t *row, size_t
             (*col)++;
         }
     }
+}
+
+ssize_t buffer_find_pattern_backward(GapBuffer *buffer, char *pattern)
+{
+	size_t pattern_len = strlen(pattern);
+    if (pattern_len == 0) return -1;
+
+	// Start from the END of buffer
+    // Note: capacity is size_t (unsigned), so we need to be careful with the loop
+    for (size_t i = buffer->capacity; i > 0; i--)
+    {
+        size_t index = i - 1;  // Actual index (since i starts at capacity)
+        
+        // Skip gap
+        if (index >= buffer->gap_start && index < buffer->gap_end)
+        {
+            continue;
+        }
+        
+        // Now check if pattern ENDS at this position
+        // Your matching logic here...
+		// At position 'index', check if pattern ENDS here
+		// We need to check backwards by pattern_len
+
+		// Make sure we have enough space before this position
+		if (index < pattern_len - 1)
+		{
+			continue;  // Not enough characters before this position
+		}
+
+		// Now check each character of the pattern
+		bool match = true;
+		for (size_t j = 0; j < pattern_len; j++)
+		{
+			size_t check_pos = index - (pattern_len - 1) + j;
+			
+			// Skip if check_pos is in gap
+			if (check_pos >= buffer->gap_start && check_pos < buffer->gap_end)
+			{
+				match = false;
+				break;
+			}
+			
+			// Check if character matches
+			if (buffer->data[check_pos] != pattern[j])
+			{
+				match = false;
+				break;
+			}
+		}
+
+		if (match)
+		{
+			// Found it! Return the START of the match
+			return index - (pattern_len - 1);
+		}
+
+    }
+	    
+    return -1;
 }

@@ -82,6 +82,8 @@ typedef struct {
     char search_buffer[256];
     size_t search_length;
 	bool search_forward;
+	char last_search_pattern[256];
+	bool last_search_forward;
 } EditorState;
 
 

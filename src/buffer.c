@@ -266,14 +266,14 @@ void buffer_index_to_screen(GapBuffer *buffer, size_t index, size_t *row, size_t
     }
 }
 
-ssize_t buffer_find_pattern_backward(GapBuffer *buffer, char *pattern)
+ssize_t buffer_find_pattern_backward(GapBuffer *buffer, char *pattern, size_t start_pos)
 {
 	size_t pattern_len = strlen(pattern);
     if (pattern_len == 0) return -1;
 
 	// Start from the END of buffer
     // Note: capacity is size_t (unsigned), so we need to be careful with the loop
-    for (size_t i = buffer->capacity; i > 0; i--)
+    for (size_t i = start_pos + 1; i > 0; i--)
     {
         size_t index = i - 1;  // Actual index (since i starts at capacity)
         
@@ -322,6 +322,41 @@ ssize_t buffer_find_pattern_backward(GapBuffer *buffer, char *pattern)
 		}
 
     }
-	    
+
     return -1;
+}
+
+size_t buffer_screen_to_index(GapBuffer *buffer, size_t target_row, size_t target_col)
+{
+    size_t current_row = 0;
+    size_t current_col = 0;
+    
+    for (size_t i = 0; i < buffer->capacity; i++)
+    {
+        // Skip gap
+        if (i >= buffer->gap_start && i < buffer->gap_end)
+        {
+            continue;
+        }
+        
+        // Check if we've reached target
+        if (current_row == target_row && current_col == target_col)
+        {
+            return i;
+        }
+        
+        char c = buffer->data[i];
+        
+        if (c == '\n')
+        {
+            current_row++;
+            current_col = 0;
+        }
+        else
+        {
+            current_col++;
+        }
+    }
+    
+    return buffer->capacity;  // Return end if not found
 }

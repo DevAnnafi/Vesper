@@ -24,6 +24,7 @@ size_t buffer_get_line_length(GapBuffer *buffer, size_t line_number);
 size_t buffer_get_total_lines(GapBuffer *buffer);
 ssize_t buffer_find_pattern(GapBuffer *buffer, char *patter, size_t start_pos);
 void buffer_index_to_screen(GapBuffer *buffer, size_t index, size_t *row, size_t *col);
-ssize_t buffer_find_pattern_backward(GapBuffer *buffer, char *pattern);
+ssize_t buffer_find_pattern_backward(GapBuffer *buffer, char *pattern, size_t start_pos);
+size_t buffer_screen_to_index(GapBuffer *buffer, size_t target_row, size_t target_col);
 
 #endif

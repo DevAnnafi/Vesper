@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/types.h>
 #include "terminal.h"
 #include "editor.h"
 #include "render.h"
@@ -271,6 +272,8 @@ void editorLoop(char *filename)
 	state.search_buffer[0] = '\0';
 	state.search_length = 0;
 	state.search_forward = true;
+	state.last_search_pattern[0] = '\0';
+	state.last_search_forward = true;
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
 	signal(SIGWINCH, sigwinch_handler);
 
@@ -484,6 +487,74 @@ void editorLoop(char *filename)
 				state.search_buffer[0] = '\0';
 				state.search_length = 0;
 				state.search_forward = false;  // Backward search
+			}
+			else if (c == 'n')  // Next match
+			{
+				if (state.last_search_pattern[0] == '\0')
+				{
+					state.message = "No previous search pattern";
+				}
+				else
+				{
+					// Get current buffer position
+					size_t current_pos = buffer_screen_to_index(buffer, state.cursor_y, state.cursor_x);
+					ssize_t match_pos;
+					
+					if (state.last_search_forward)
+					{
+						// Search forward from current position + 1
+						match_pos = buffer_find_pattern(buffer, state.last_search_pattern, current_pos + 1);
+					}
+					else
+					{
+						// Search backward from current position - 1
+						match_pos = buffer_find_pattern_backward(buffer, state.last_search_pattern, current_pos - 1);
+					}
+					
+					if (match_pos != -1)
+					{
+						buffer_index_to_screen(buffer, match_pos, &state.cursor_y, &state.cursor_x);
+						state.message = "Pattern found";
+					}
+					else
+					{
+						state.message = "Pattern not found";
+					}
+				}
+			}
+			else if (c == 'N')  // Previous match (opposite direction)
+			{
+				if (state.last_search_pattern[0] == '\0')
+				{
+					state.message = "No previous search pattern";
+				}
+				else
+				{
+					// Get current buffer position
+					size_t current_pos = buffer_screen_to_index(buffer, state.cursor_y, state.cursor_x);
+					ssize_t match_pos;
+					
+					if (state.last_search_forward)
+					{
+						// Search backward (opposite of original forward search)
+						match_pos = buffer_find_pattern_backward(buffer, state.last_search_pattern, current_pos - 1);
+					}
+					else
+					{
+						// Search forward (opposite of original backward search)
+						match_pos = buffer_find_pattern(buffer, state.last_search_pattern, current_pos + 1);
+					}
+					
+					if (match_pos != -1)
+					{
+						buffer_index_to_screen(buffer, match_pos, &state.cursor_y, &state.cursor_x);
+						state.message = "Pattern found";
+					}
+					else
+					{
+						state.message = "Pattern not found";
+					}
+				}
 			}
 			else if (c == 'u')
 			{
@@ -727,13 +798,23 @@ void editorLoop(char *filename)
 			}
 			else if (c == 13 || c == 10) // Enter
 			{
-				// Call your search function here
-				ssize_t match_pos = buffer_find_pattern(buffer, state.search_buffer, 0);
+				ssize_t match_pos;
 
+				if (state.search_forward) 
+				{
+					match_pos = buffer_find_pattern(buffer, state.search_buffer, 0);
+				}
+				else
+				{
+					match_pos = buffer_find_pattern_backward(buffer, state.search_buffer, buffer->capacity - 1);
+				}
 				if (match_pos != -1)
 				{
 					buffer_index_to_screen(buffer, match_pos, &state.cursor_y, &state.cursor_x);
 					state.message = "Pattern found";
+
+					strcpy(state.last_search_pattern, state.search_buffer);
+					state.last_search_forward = state.search_forward;
 				}
 				else
 				{

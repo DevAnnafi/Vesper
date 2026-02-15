@@ -13,37 +13,37 @@ EditorState state;
 
 void sigwinch_handler(int sig)
 {
-        get_terminal_size(&state.screen_rows, &state.screen_cols);
-        screen_clear();
-        fflush(stdout);
+	get_terminal_size(&state.screen_rows, &state.screen_cols);
+	screen_clear();
+	fflush(stdout);
 }
 
 void scroll()
 {
-        if (state.cursor_y >= state.row_offset + state.screen_rows - 1)
-        {
-                state.row_offset = state.cursor_y - state.screen_rows + 2;
-        }
+	if (state.cursor_y >= state.row_offset + state.screen_rows - 1)
+	{
+		state.row_offset = state.cursor_y - state.screen_rows + 2;
+	}
 
-        if (state.cursor_y < state.row_offset)
-        {
-                state.row_offset = state.cursor_y;
-        }
+	if (state.cursor_y < state.row_offset)
+	{
+		state.row_offset = state.cursor_y;
+	}
 
-        if (state.cursor_x >= state.col_offset + state.screen_cols)
-        {
-                state.col_offset = state.cursor_x - state.screen_cols + 1;
-        }
+	if (state.cursor_x >= state.col_offset + state.screen_cols)
+	{
+		state.col_offset = state.cursor_x - state.screen_cols + 1;
+	}
 
-        if (state.cursor_x < state.col_offset)
-        {
-                state.col_offset = state.cursor_x;
-        }
+	if (state.cursor_x < state.col_offset)
+	{
+		state.col_offset = state.cursor_x;
+	}
 }
 
 void save_file(char *filename, GapBuffer *buffer, EditorState *state)
 {
-	if (filename == NULL) 
+	if (filename == NULL)
 	{
 		state->message = "Error: No filename";
 		return;
@@ -57,23 +57,22 @@ void save_file(char *filename, GapBuffer *buffer, EditorState *state)
 		return;
 	}
 
-	for(size_t i = 0; i < buffer->capacity; i++)
-	{		
-		if(i >= buffer->gap_start && i < buffer->gap_end)
+	for (size_t i = 0; i < buffer->capacity; i++)
+	{
+		if (i >= buffer->gap_start && i < buffer->gap_end)
 		{
 			continue;
 		}
 
 		char c = buffer->data[i];
 		fputc(c, fp);
-
 	}
 
 	fclose(fp);
 	state->message = "File saved!";
 }
 
-UndoManager* undo_manager_create()
+UndoManager *undo_manager_create()
 {
 	UndoManager *um = malloc(sizeof(UndoManager));
 
@@ -85,89 +84,89 @@ UndoManager* undo_manager_create()
 	um->redo_count = 0;
 	um->redo_capacity = 10;
 
-	um->current_insert_buffer = malloc(256);  // Start with 256 chars
-    	um->current_insert_len = 0;
-    	um->current_insert_capacity = 256;
-    	um->insert_start_pos = 0;
-    	um->insert_start_x = 0;
-    	um->insert_start_y = 0;
-    	um->in_insert_session = false;
+	um->current_insert_buffer = malloc(256); // Start with 256 chars
+	um->current_insert_len = 0;
+	um->current_insert_capacity = 256;
+	um->insert_start_pos = 0;
+	um->insert_start_x = 0;
+	um->insert_start_y = 0;
+	um->in_insert_session = false;
 
-    	return um;
+	return um;
 }
 
 void undo_push_operation(UndoManager *um, OpType type, char *content, size_t pos, size_t cx, size_t cy)
 {
-    // Grow stack if needed
-    if (um->undo_count >= um->undo_capacity)
-    {
-        um->undo_capacity *= 2;
-        um->undo_stack = realloc(um->undo_stack, sizeof(UndoOperation) * um->undo_capacity);
-    }
+	// Grow stack if needed
+	if (um->undo_count >= um->undo_capacity)
+	{
+		um->undo_capacity *= 2;
+		um->undo_stack = realloc(um->undo_stack, sizeof(UndoOperation) * um->undo_capacity);
+	}
 
-    // Create operation
-    UndoOperation op;
-    op.type = type;
-    op.content = malloc(strlen(content) + 1);
-    strcpy(op.content, content);
-    op.position = pos;
-    op.cursor_x = cx;
-    op.cursor_y = cy;
+	// Create operation
+	UndoOperation op;
+	op.type = type;
+	op.content = malloc(strlen(content) + 1);
+	strcpy(op.content, content);
+	op.position = pos;
+	op.cursor_x = cx;
+	op.cursor_y = cy;
 
-    // Add to stack
-    um->undo_stack[um->undo_count] = op;
-    um->undo_count++;
+	// Add to stack
+	um->undo_stack[um->undo_count] = op;
+	um->undo_count++;
 
-    // Clear redo stack (new action invalidates redo)
-    um->redo_count = 0;
+	// Clear redo stack (new action invalidates redo)
+	um->redo_count = 0;
 }
 
 void undo_push_operation_no_clear(UndoManager *um, OpType type, char *content, size_t pos, size_t cx, size_t cy)
 {
-    // Grow stack if needed
-    if (um->undo_count >= um->undo_capacity)
-    {
-        um->undo_capacity *= 2;
-        um->undo_stack = realloc(um->undo_stack, sizeof(UndoOperation) * um->undo_capacity);
-    }
+	// Grow stack if needed
+	if (um->undo_count >= um->undo_capacity)
+	{
+		um->undo_capacity *= 2;
+		um->undo_stack = realloc(um->undo_stack, sizeof(UndoOperation) * um->undo_capacity);
+	}
 
-    // Create operation
-    UndoOperation op;
-    op.type = type;
-    op.content = malloc(strlen(content) + 1);
-    strcpy(op.content, content);
-    op.position = pos;
-    op.cursor_x = cx;
-    op.cursor_y = cy;
+	// Create operation
+	UndoOperation op;
+	op.type = type;
+	op.content = malloc(strlen(content) + 1);
+	strcpy(op.content, content);
+	op.position = pos;
+	op.cursor_x = cx;
+	op.cursor_y = cy;
 
-    // Add to stack
-    um->undo_stack[um->undo_count] = op;
-    um->undo_count++;
+	// Add to stack
+	um->undo_stack[um->undo_count] = op;
+	um->undo_count++;
 
-    // DON'T clear redo stack here!
+	// DON'T clear redo stack here!
 }
 
 void redo_push_operation(UndoManager *um, OpType type, char *content, size_t pos, size_t cx, size_t cy)
 {
-        if (um->redo_count >= um->redo_capacity)
-        {
-                um->redo_capacity *= 2;
-                um->redo_stack = realloc(um->redo_stack, sizeof(UndoOperation) * um->redo_capacity);
-        }
+	if (um->redo_count >= um->redo_capacity)
+	{
+		um->redo_capacity *= 2;
+		um->redo_stack = realloc(um->redo_stack, sizeof(UndoOperation) * um->redo_capacity);
+	}
 
-        UndoOperation op;
-        op.type = type;
-        op.content = malloc(strlen(content) + 1);
-        strcpy(op.content, content);
-        op.position = pos;
-        op.cursor_x = cx;
-        op.cursor_y = cy;
+	UndoOperation op;
+	op.type = type;
+	op.content = malloc(strlen(content) + 1);
+	strcpy(op.content, content);
+	op.position = pos;
+	op.cursor_x = cx;
+	op.cursor_y = cy;
 
-        um->redo_stack[um->redo_count] = op;
-        um->redo_count++;
+	um->redo_stack[um->redo_count] = op;
+	um->redo_count++;
 }
 
-void undo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state) 
+void undo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state)
 {
 	if (um->undo_count == 0)
 	{
@@ -188,7 +187,7 @@ void undo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state)
 		}
 
 		state->cursor_x = op.cursor_x;
-        	state->cursor_y = op.cursor_y;
+		state->cursor_y = op.cursor_y;
 	}
 
 	else if (op.type == OP_DELETE)
@@ -210,33 +209,32 @@ void undo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state)
 	state->cursor_y = op.cursor_y;
 
 	redo_push_operation(um, op.type, op.content, op.position, op.cursor_x, op.cursor_y);
-
 }
 
 void redo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state)
 {
- 	if (um->redo_count == 0)
-        {
-                state->message = "Nothing to redo";
-                return;
-        }
+	if (um->redo_count == 0)
+	{
+		state->message = "Nothing to redo";
+		return;
+	}
 
-        um->redo_count--;
-        UndoOperation op = um->redo_stack[um->redo_count];
+	um->redo_count--;
+	UndoOperation op = um->redo_stack[um->redo_count];
 
 	state->cursor_x = op.cursor_x;
 	state->cursor_y = op.cursor_y;
-	
-	if (op.type == OP_INSERT)
-        {
-                size_t len = strlen(op.content);
 
-                for (size_t i = 0; i < len; i++)
-                {
-                        char c = op.content[i];
+	if (op.type == OP_INSERT)
+	{
+		size_t len = strlen(op.content);
+
+		for (size_t i = 0; i < len; i++)
+		{
+			char c = op.content[i];
 			buffer_insert_char(buffer, c);
-                }
-        }
+		}
+	}
 
 	else if (op.type == OP_DELETE)
 	{
@@ -249,8 +247,6 @@ void redo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state)
 	}
 
 	undo_push_operation_no_clear(um, op.type, op.content, op.position, op.cursor_x, op.cursor_y);
-
-
 }
 
 void editorLoop(char *filename)
@@ -258,12 +254,12 @@ void editorLoop(char *filename)
 
 	char *current_filename = filename;
 
-        // Initialize state
-        state.row_offset = 0;
-        state.col_offset = 0;
-        state.cursor_x = 0;
-        state.cursor_y = 0;
-        state.mode = NORMAL;
+	// Initialize state
+	state.row_offset = 0;
+	state.col_offset = 0;
+	state.cursor_x = 0;
+	state.cursor_y = 0;
+	state.mode = NORMAL;
 	state.message = NULL;
 	state.command_buffer[0] = 0;
 	state.command_length = 0;
@@ -274,10 +270,11 @@ void editorLoop(char *filename)
 	state.undo_manager = undo_manager_create();
 	state.search_buffer[0] = '\0';
 	state.search_length = 0;
-        get_terminal_size(&state.screen_rows, &state.screen_cols);
-        signal(SIGWINCH, sigwinch_handler);
+	state.search_forward = true;
+	get_terminal_size(&state.screen_rows, &state.screen_cols);
+	signal(SIGWINCH, sigwinch_handler);
 
-        GapBuffer *buffer = buffer_create(1024);
+	GapBuffer *buffer = buffer_create(1024);
 
 	if (filename != NULL)
 	{
@@ -291,8 +288,8 @@ void editorLoop(char *filename)
 
 			char *contents = malloc(file_size + 1);
 
-			if(contents != NULL)
-			{	
+			if (contents != NULL)
+			{
 
 				fread(contents, 1, file_size, fp);
 				contents[file_size] = '\0';
@@ -309,22 +306,20 @@ void editorLoop(char *filename)
 		}
 	}
 
+	while (1)
+	{
+		printf("\x1b[2J");
+		printf("\x1b[H");
 
+		render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
+		draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer, state.search_buffer, state.search_forward);
 
-        while (1)
-        {
-                printf("\x1b[2J");
-                printf("\x1b[H");
+		printf("\x1b[%zu;%zuH", state.cursor_y + 1, state.cursor_x + 1);
 
-                render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
-                draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer, state.search_buffer);
+		fflush(stdout);
 
-                printf("\x1b[%zu;%zuH", state.cursor_y + 1, state.cursor_x + 1);
-
-                fflush(stdout);
-
-                char c;
-                read(STDIN_FILENO, &c, 1);
+		char c;
+		read(STDIN_FILENO, &c, 1);
 
 		if (c == 19)
 		{
@@ -333,154 +328,162 @@ void editorLoop(char *filename)
 			continue;
 		}
 
-                // Check for arrow keys first
-                if (c == 27)
-                {
-                        char seq[2];
+		// Check for arrow keys first
+		if (c == 27)
+		{
+			char seq[2];
 
-                        if (read(STDIN_FILENO, &seq[0], 1) == 1)
-                        {
-                                if (seq[0] == '[')
-                                {
-                                        if(read(STDIN_FILENO, &seq[1], 1) == 1)
-                                        {
-                                                if(seq[1] == 'A')
-                                                {
-                                                         if(state.cursor_y > 0)
-                                                         {
-                                                                state.cursor_y--;
-                                                         }
-                                                }
-                                                else if (seq[1] == 'B')
-                                                {
-                                                         if(state.cursor_y < state.screen_rows - 1)
-                                                         {
-                                                                state.cursor_y++;
-                                                         }
-                                                }
-                                                else if (seq[1] == 'C')
-                                                {
-                                                          if (state.cursor_x < state.screen_cols - 1)
-                                                          {
-                                                                state.cursor_x++;
-                                                          }
-                                                }
-                                                else if (seq[1] == 'D')
-                                                {
-                                                        if (state.cursor_x > 0)
-                                                        {
-                                                                state.cursor_x--;
-                                                        }
-                                                }
-                                                else if (seq[1] == 'H')
-                                                {
-                                                        state.cursor_x = 0;
-                                                        scroll();
-                                                        continue;
-                                                }
-                                                else if (seq[1] == '1')
-                                                {
-                                                        char seq2;
-                                                        if (read(STDIN_FILENO, &seq2, 1) == 1)
-                                                        {
-                                                                if (seq2 == '~')
-                                                                {
-                                                                        state.cursor_x = 0;
-                                                                        scroll();
-                                                                        continue;
-                                                                }
-                                                        }
-                                                }
-                                                else if (seq[1] == 'F')
-                                                {
-                                                        // End key: ESC [ F
-                                                        size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
-                                                        state.cursor_x = line_length;
-                                                        scroll();
-                                                        continue;
-                                                }
-                                                else if (seq[1] == '4')
-                                                {
-                                                        // Might be End key (ESC [ 4 ~)
-                                                        char seq2;
-                                                        if (read(STDIN_FILENO, &seq2, 1) == 1)
-                                                        {
-                                                                if (seq2 == '~')
-                                                                {
-                                                                        // It's End key!
-                                                                        size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
-                                                                        state.cursor_x = line_length;
-                                                                        scroll();
-                                                                        continue;
-                                                                }
-                                                         }
-                                                 }
-                                                else if (seq[1] == '5')
-                                                {
-                                                        // Might be Page Up (ESC [ 5 ~)
-                                                        char seq2;
-                                                        if (read(STDIN_FILENO, &seq2, 1) == 1)
-                                                        {
-                                                                if (seq2 == '~')
-                                                                {
-                                                                        // It's Page Up!
-                                                                        if (state.cursor_y < state.screen_rows - 1)
-                                                                        {
-                                                                                 state.cursor_y = 0;
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                                state.cursor_y -= (state.screen_rows - 1);
-                                                                        }
-                                                                        scroll();
-                                                                        continue;
-                                                                }
-                                                        }
-                                                }
-                                                else if (seq[1] == '6')
-                                                {
-                                                        // Might be Page Down (ESC [ 6 ~)
-                                                        char seq2;
-                                                        if (read(STDIN_FILENO, &seq2, 1) == 1)
-                                                        {
-                                                                if (seq2 == '~')
-                                                                {
-                                                                        // It's Page Down!
-                                                                        size_t total_lines = buffer_get_total_lines(buffer);
-                                                                        size_t new_pos = state.cursor_y + (state.screen_rows - 1);
+			if (read(STDIN_FILENO, &seq[0], 1) == 1)
+			{
+				if (seq[0] == '[')
+				{
+					if (read(STDIN_FILENO, &seq[1], 1) == 1)
+					{
+						if (seq[1] == 'A')
+						{
+							if (state.cursor_y > 0)
+							{
+								state.cursor_y--;
+							}
+						}
+						else if (seq[1] == 'B')
+						{
+							if (state.cursor_y < state.screen_rows - 1)
+							{
+								state.cursor_y++;
+							}
+						}
+						else if (seq[1] == 'C')
+						{
+							if (state.cursor_x < state.screen_cols - 1)
+							{
+								state.cursor_x++;
+							}
+						}
+						else if (seq[1] == 'D')
+						{
+							if (state.cursor_x > 0)
+							{
+								state.cursor_x--;
+							}
+						}
+						else if (seq[1] == 'H')
+						{
+							state.cursor_x = 0;
+							scroll();
+							continue;
+						}
+						else if (seq[1] == '1')
+						{
+							char seq2;
+							if (read(STDIN_FILENO, &seq2, 1) == 1)
+							{
+								if (seq2 == '~')
+								{
+									state.cursor_x = 0;
+									scroll();
+									continue;
+								}
+							}
+						}
+						else if (seq[1] == 'F')
+						{
+							// End key: ESC [ F
+							size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
+							state.cursor_x = line_length;
+							scroll();
+							continue;
+						}
+						else if (seq[1] == '4')
+						{
+							// Might be End key (ESC [ 4 ~)
+							char seq2;
+							if (read(STDIN_FILENO, &seq2, 1) == 1)
+							{
+								if (seq2 == '~')
+								{
+									// It's End key!
+									size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
+									state.cursor_x = line_length;
+									scroll();
+									continue;
+								}
+							}
+						}
+						else if (seq[1] == '5')
+						{
+							// Might be Page Up (ESC [ 5 ~)
+							char seq2;
+							if (read(STDIN_FILENO, &seq2, 1) == 1)
+							{
+								if (seq2 == '~')
+								{
+									// It's Page Up!
+									if (state.cursor_y < state.screen_rows - 1)
+									{
+										state.cursor_y = 0;
+									}
+									else
+									{
+										state.cursor_y -= (state.screen_rows - 1);
+									}
+									scroll();
+									continue;
+								}
+							}
+						}
+						else if (seq[1] == '6')
+						{
+							// Might be Page Down (ESC [ 6 ~)
+							char seq2;
+							if (read(STDIN_FILENO, &seq2, 1) == 1)
+							{
+								if (seq2 == '~')
+								{
+									// It's Page Down!
+									size_t total_lines = buffer_get_total_lines(buffer);
+									size_t new_pos = state.cursor_y + (state.screen_rows - 1);
 
-                                                                        if (new_pos >= total_lines)
-                                                                        {
-                                                                                state.cursor_y = total_lines - 1;
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                                state.cursor_y = new_pos;
-                                                                        }
-                                                                        scroll();
-                                                                        continue;
-                                                                 }
-                                                        }
-                                                }
+									if (new_pos >= total_lines)
+									{
+										state.cursor_y = total_lines - 1;
+									}
+									else
+									{
+										state.cursor_y = new_pos;
+									}
+									scroll();
+									continue;
+								}
+							}
+						}
 
-                                                scroll();
-                                                continue;
-                                        }
-                                }
-                        }
-                }
+						scroll();
+						continue;
+					}
+				}
+			}
+		}
 
-                if (state.mode == NORMAL)
-                {
-                        if (c == 'q')
-                        {
-                                break;
-                        }
+		if (state.mode == NORMAL)
+		{
+			if (c == 'q')
+			{
+				break;
+			}
 			else if (c == '/')
 			{
 				state.mode = SEARCH;
 				state.search_buffer[0] = '\0';
 				state.search_length = 0;
+				state.search_forward = true;  // Forward search
+			}
+			else if (c == '?')
+			{
+				state.mode = SEARCH;
+				state.search_buffer[0] = '\0';
+				state.search_length = 0;
+				state.search_forward = false;  // Backward search
 			}
 			else if (c == 'u')
 			{
@@ -496,142 +499,135 @@ void editorLoop(char *filename)
 				state.command_buffer[0] = '\0';
 				state.command_length = 0;
 			}
-                        else if (c == 'h')
-                        {
-                                if (state.cursor_x > 0)
-                                {
-                                        state.cursor_x--;
-                                }
-                        }
-                        else if (c == 'l')
-                        {
-                                if (state.cursor_x < state.screen_cols - 1)
-                                {
-                                        state.cursor_x++;
-                                }
-                        }
-                        else if (c == 'k')
-                        {
-                                if(state.cursor_y > 0)
-                                {
-                                        state.cursor_y--;
-                                }
-                        }
-                        else if (c == 'j')
-                        {
-                                if(state.cursor_y < state.screen_rows - 1)
-                                {
-                                        state.cursor_y++;
-                                }
-                        }
-                        else if (c == '0')
-                        {
-                                state.cursor_x = 0;
-                        }
-                        else if (c == '$')
-                        {
-                                size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
-                                state.cursor_x = line_length;
-                        }
-                        else if (c == 'i')
-                        {
-                                state.mode = INSERT;
+			else if (c == 'h')
+			{
+				if (state.cursor_x > 0)
+				{
+					state.cursor_x--;
+				}
+			}
+			else if (c == 'l')
+			{
+				if (state.cursor_x < state.screen_cols - 1)
+				{
+					state.cursor_x++;
+				}
+			}
+			else if (c == 'k')
+			{
+				if (state.cursor_y > 0)
+				{
+					state.cursor_y--;
+				}
+			}
+			else if (c == 'j')
+			{
+				if (state.cursor_y < state.screen_rows - 1)
+				{
+					state.cursor_y++;
+				}
+			}
+			else if (c == '0')
+			{
+				state.cursor_x = 0;
+			}
+			else if (c == '$')
+			{
+				size_t line_length = buffer_get_line_length(buffer, state.cursor_y);
+				state.cursor_x = line_length;
+			}
+			else if (c == 'i')
+			{
+				state.mode = INSERT;
 
 				state.undo_manager->in_insert_session = true;
-    				state.undo_manager->insert_start_x = state.cursor_x;
-    				state.undo_manager->insert_start_y = state.cursor_y;
-    				state.undo_manager->insert_start_pos = buffer->gap_start;
-    				state.undo_manager->current_insert_len = 0;
-    				
-				state.undo_manager->current_insert_buffer[0] = '\0';
-                        }
-                }
-                else if (state.mode == INSERT)
-                {
-                        // If ESC is clicked switch to NORMAL mode
-                        if (c == 27)
-                        {
-				// Save INSERT operation before switching mode
-    				if (state.undo_manager->in_insert_session && state.undo_manager->current_insert_len > 0)
-    				{
-        				undo_push_operation
-					(
-            				state.undo_manager,
-            				OP_INSERT,
-            				state.undo_manager->current_insert_buffer,
-            				state.undo_manager->insert_start_pos,
-            				state.undo_manager->insert_start_x,
-            				state.undo_manager->insert_start_y
-        				);
-    				}
+				state.undo_manager->insert_start_x = state.cursor_x;
+				state.undo_manager->insert_start_y = state.cursor_y;
+				state.undo_manager->insert_start_pos = buffer->gap_start;
+				state.undo_manager->current_insert_len = 0;
 
-    				state.undo_manager->in_insert_session = false;
-                                state.mode = NORMAL;
-                        }
-                        // If BACKSPACE is clicked delete the character
-                        else if (c == 127)
-                        {
-                                buffer_delete_char(buffer);
+				state.undo_manager->current_insert_buffer[0] = '\0';
+			}
+		}
+		else if (state.mode == INSERT)
+		{
+			// If ESC is clicked switch to NORMAL mode
+			if (c == 27)
+			{
+				// Save INSERT operation before switching mode
+				if (state.undo_manager->in_insert_session && state.undo_manager->current_insert_len > 0)
+				{
+					undo_push_operation(
+						state.undo_manager,
+						OP_INSERT,
+						state.undo_manager->current_insert_buffer,
+						state.undo_manager->insert_start_pos,
+						state.undo_manager->insert_start_x,
+						state.undo_manager->insert_start_y);
+				}
+
+				state.undo_manager->in_insert_session = false;
+				state.mode = NORMAL;
+			}
+			// If BACKSPACE is clicked delete the character
+			else if (c == 127)
+			{
+				buffer_delete_char(buffer);
 
 				if (state.undo_manager->in_insert_session && state.undo_manager->current_insert_len > 0)
 				{
 					state.undo_manager->current_insert_len--;
 					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
 				}
-                        }
+			}
 			else if (c == 13 || c == 10)
 			{
 				buffer_insert_char(buffer, '\n');
 
 				// Also track newline in insert buffer
-    				if (state.undo_manager->in_insert_session)
-    				{
-        				// Check if buffer needs to grow
-        				if (state.undo_manager->current_insert_len >= state.undo_manager->current_insert_capacity - 1)
-        				{
-            					state.undo_manager->current_insert_capacity *= 2;
-            					state.undo_manager->current_insert_buffer = realloc
-						(
-                				state.undo_manager->current_insert_buffer,
-                				state.undo_manager->current_insert_capacity
-            					);
-        				}
+				if (state.undo_manager->in_insert_session)
+				{
+					// Check if buffer needs to grow
+					if (state.undo_manager->current_insert_len >= state.undo_manager->current_insert_capacity - 1)
+					{
+						state.undo_manager->current_insert_capacity *= 2;
+						state.undo_manager->current_insert_buffer = realloc(
+							state.undo_manager->current_insert_buffer,
+							state.undo_manager->current_insert_capacity);
+					}
 
-        				// Add newline
-        				state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\n';
-        				state.undo_manager->current_insert_len++;
-        				state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
-    				}
+					// Add newline
+					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\n';
+					state.undo_manager->current_insert_len++;
+					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
+				}
 			}
 
-                        // If Character is to be inserted insert the character
-                        else if (c >= 32 && c <= 126)
-                        {
-                                buffer_insert_char(buffer, c);
+			// If Character is to be inserted insert the character
+			else if (c >= 32 && c <= 126)
+			{
+				buffer_insert_char(buffer, c);
 
 				if (state.undo_manager->in_insert_session)
 				{
-    					// Check if buffer needs to grow
-    					if (state.undo_manager->current_insert_len >= state.undo_manager->current_insert_capacity - 1)
-    					{
-        				
-					// Double the capacity
-        				state.undo_manager->current_insert_capacity *= 2;
-        				state.undo_manager->current_insert_buffer = realloc
-					(
-            				state.undo_manager->current_insert_buffer,
-            				state.undo_manager->current_insert_capacity
-        				);
-    					
+					// Check if buffer needs to grow
+					if (state.undo_manager->current_insert_len >= state.undo_manager->current_insert_capacity - 1)
+					{
+
+						// Double the capacity
+						state.undo_manager->current_insert_capacity *= 2;
+						state.undo_manager->current_insert_buffer = realloc(
+							state.undo_manager->current_insert_buffer,
+							state.undo_manager->current_insert_capacity);
 					}
 
-   					// Add character
-    					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = c;
-    					state.undo_manager->current_insert_len++;
-    					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
+					// Add character
+					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = c;
+					state.undo_manager->current_insert_len++;
+					state.undo_manager->current_insert_buffer[state.undo_manager->current_insert_len] = '\0';
 				}
-                        }
-                }
+			}
+		}
 
 		else if (state.mode == COMMAND)
 		{
@@ -652,8 +648,6 @@ void editorLoop(char *filename)
 					// add null terminator at current_length position
 					state.command_buffer[state.command_length] = '\0';
 				}
-
-
 			}
 
 			else if (c == 13 || c == 10)
@@ -677,9 +671,8 @@ void editorLoop(char *filename)
 					break;
 				}
 
-				else if(state.command_buffer[0] == '\0')
+				else if (state.command_buffer[0] == '\0')
 				{
-					
 				}
 
 				else
@@ -705,66 +698,63 @@ void editorLoop(char *filename)
 					state.command_buffer[state.command_length] = '\0';
 				}
 
-				else 
+				else
 				{
 					state.command_buffer[0] = '\0';
 					state.command_length = 0;
 
 					state.message = "Command too long";
 				}
-
 			}
 		}
 
 		else if (state.mode == SEARCH)
 		{
-    		if (c == 27)  // ESC
-    		{
-        		state.mode = NORMAL;
-        		state.search_buffer[0] = '\0';
-        		state.search_length = 0;
-        		state.message = NULL;
-    		}
-    		else if (c == 127)  // Backspace
-    		{
-        		if (state.search_length > 0)
-        		{
-            		state.search_length--;
-            		state.search_buffer[state.search_length] = '\0';
-        		}
-    		}
-    		else if (c == 13 || c == 10)  // Enter
-    		{
-        		// Call your search function here
-        		ssize_t match_pos = buffer_find_pattern(buffer, state.search_buffer, 0);
+			if (c == 27) // ESC
+			{
+				state.mode = NORMAL;
+				state.search_buffer[0] = '\0';
+				state.search_length = 0;
+				state.message = NULL;
+			}
+			else if (c == 127) // Backspace
+			{
+				if (state.search_length > 0)
+				{
+					state.search_length--;
+					state.search_buffer[state.search_length] = '\0';
+				}
+			}
+			else if (c == 13 || c == 10) // Enter
+			{
+				// Call your search function here
+				ssize_t match_pos = buffer_find_pattern(buffer, state.search_buffer, 0);
 
-        		if (match_pos != -1)
-        		{
-            			buffer_index_to_screen(buffer, match_pos, &state.cursor_y, &state.cursor_x);
-            			state.message = "Pattern found";
-        		}
-        		else
-        		{
-            			state.message = "Pattern not found";
-        		}
+				if (match_pos != -1)
+				{
+					buffer_index_to_screen(buffer, match_pos, &state.cursor_y, &state.cursor_x);
+					state.message = "Pattern found";
+				}
+				else
+				{
+					state.message = "Pattern not found";
+				}
 
-        		state.search_buffer[0] = '\0';
-        		state.search_length = 0;
-        		state.mode = NORMAL;
-    		}
-    		else if (c >= 32 && c <= 126)  // Printable characters
-    		{
-        		if (state.search_length < 255)
-        		{
-            			state.search_buffer[state.search_length] = c;
-            			state.search_length++;
-            			state.search_buffer[state.search_length] = '\0';
-        		}
-    		}
+				state.search_buffer[0] = '\0';
+				state.search_length = 0;
+				state.mode = NORMAL;
+			}
+			else if (c >= 32 && c <= 126) // Printable characters
+			{
+				if (state.search_length < 255)
+				{
+					state.search_buffer[state.search_length] = c;
+					state.search_length++;
+					state.search_buffer[state.search_length] = '\0';
+				}
+			}
 		}
 	}
 
-        scroll();
+	scroll();
 }
-
-

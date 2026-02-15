@@ -65,7 +65,7 @@ void render_get_cursor_pos(GapBuffer *buffer, size_t *row, size_t *col)
     }
 }
 
-void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, EditorMode mode, char *message, char *command_buffer, char *search_buffer)
+void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, EditorMode mode, char *message, char *command_buffer, char *search_buffer, bool search_forward)
 {
     // Move cursor to bottom row
     printf("\x1b[%zu;1H", screen_rows);
@@ -93,7 +93,7 @@ void draw_status_line(size_t cursor_x, size_t cursor_y, size_t screen_rows, Edit
 
     else if (mode == SEARCH)
     {
-	    printf("/%s", search_buffer);
+	    printf("%s%s", search_forward ? "/" : "?", search_buffer);
     }
 
     else 

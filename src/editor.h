@@ -81,6 +81,7 @@ typedef struct {
     UndoManager *undo_manager;
     char search_buffer[256];
     size_t search_length;
+	bool search_forward;
 } EditorState;
 
 

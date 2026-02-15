@@ -2,6 +2,7 @@
 #define GAP_BUFFER
 
 #include <stddef.h>
+#include <sys/types.h>
 
 typedef struct 
 {
@@ -21,5 +22,7 @@ void buffer_grow(GapBuffer *buffer);
 void buffer_print_debug(GapBuffer *buffer);
 size_t buffer_get_line_length(GapBuffer *buffer, size_t line_number);
 size_t buffer_get_total_lines(GapBuffer *buffer);
+ssize_t buffer_find_pattern(GapBuffer *buffer, char *patter, size_t start_pos);
+void buffer_index_to_screen(GapBuffer *buffer, size_t index, size_t *row, size_t *col);
 
 #endif

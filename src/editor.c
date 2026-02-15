@@ -319,7 +319,7 @@ void editorLoop(char *filename)
                 render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
                 draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer, state.search_buffer);
 
-                printf("\x1b[%d;%dH", state.cursor_y + 1, state.cursor_x + 1);
+                printf("\x1b[%zu;%zuH", state.cursor_y + 1, state.cursor_x + 1);
 
                 fflush(stdout);
 
@@ -716,7 +716,55 @@ void editorLoop(char *filename)
 			}
 		}
 
-                scroll();
-        }
+		else if (state.mode == SEARCH)
+		{
+    		if (c == 27)  // ESC
+    		{
+        		state.mode = NORMAL;
+        		state.search_buffer[0] = '\0';
+        		state.search_length = 0;
+        		state.message = NULL;
+    		}
+    		else if (c == 127)  // Backspace
+    		{
+        		if (state.search_length > 0)
+        		{
+            		state.search_length--;
+            		state.search_buffer[state.search_length] = '\0';
+        		}
+    		}
+    		else if (c == 13 || c == 10)  // Enter
+    		{
+        		// Call your search function here
+        		ssize_t match_pos = buffer_find_pattern(buffer, state.search_buffer, 0);
 
+        		if (match_pos != -1)
+        		{
+            			buffer_index_to_screen(buffer, match_pos, &state.cursor_y, &state.cursor_x);
+            			state.message = "Pattern found";
+        		}
+        		else
+        		{
+            			state.message = "Pattern not found";
+        		}
+
+        		state.search_buffer[0] = '\0';
+        		state.search_length = 0;
+        		state.mode = NORMAL;
+    		}
+    		else if (c >= 32 && c <= 126)  // Printable characters
+    		{
+        		if (state.search_length < 255)
+        		{
+            			state.search_buffer[state.search_length] = c;
+            			state.search_length++;
+            			state.search_buffer[state.search_length] = '\0';
+        		}
+    		}
+		}
+	}
+
+        scroll();
 }
+
+

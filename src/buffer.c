@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "buffer.h"
+#include <sys/types.h>
 
 GapBuffer* buffer_create(size_t initial_size) {
 
@@ -197,3 +198,69 @@ size_t buffer_get_total_lines(GapBuffer *buffer)
 	return line_count;
 }
 
+ssize_t buffer_find_pattern(GapBuffer *buffer, char *pattern, size_t start_pos)
+{
+	size_t pattern_len = strlen(pattern);
+	if (pattern_len == 0) return -1;
+
+	size_t match_count = 0;
+	size_t match_start = 0;
+
+	for (size_t i = start_pos; i < buffer->capacity; i++)
+	{
+		if (i >= buffer->gap_start && i < buffer->gap_end)
+		{
+			continue;
+		}
+
+		char c = buffer->data[i];
+
+		// Check if character matches pattern
+		if (c == pattern[match_count])
+		{
+			if (match_count == 0)
+			{
+				match_start = i;
+			}
+			match_count++;
+
+			if (match_count == pattern_len)
+			{
+				return match_start;
+			}
+		}
+		else 
+		{
+			match_count = 0;
+		}		
+	}
+
+	return -1;
+}
+
+void buffer_index_to_screen(GapBuffer *buffer, size_t index, size_t *row, size_t *col)
+{
+    *row = 0;
+    *col = 0;
+    
+    for (size_t i = 0; i < index && i < buffer->capacity; i++)
+    {
+        // Skip gap
+        if (i >= buffer->gap_start && i < buffer->gap_end)
+        {
+            continue;
+        }
+        
+        char c = buffer->data[i];
+        
+        if (c == '\n')
+        {
+            (*row)++;
+            *col = 0;
+        }
+        else
+        {
+            (*col)++;
+        }
+    }
+}

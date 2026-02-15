@@ -239,6 +239,31 @@ Implemented full undo/redo functionality with Vim-style action-level granularity
 **Current Functionality:**
 Full undo/redo system working. Users can press `u` in NORMAL mode to undo the last action (entire INSERT session or individual command). Press Ctrl+R to redo. Multiple undo/redo operations work correctly. Cursor position is restored to where it was when the action started. Newlines are properly tracked so multi-line inserts undo/redo correctly. New actions clear the redo stack as expected.
 
+### Step 10 — Search
+**Status:** In Progress 
+
+Implemented search functionality with forward and backward search:
+
+- ✅ Capture search query
+- ✅ Find forward match
+- ✅ Find backward match
+- ⏳ Jump to match
+- ⏳ Highlight matches
+
+**What I Learned:**
+- Adding SEARCH mode to editor mode enum
+- Capturing search patterns in a dedicated buffer
+- Implementing forward search from beginning of buffer
+- Implementing backward search from end of buffer
+- Matching patterns while skipping gap region in gap buffer
+- Converting buffer index to screen coordinates (row, col)
+- Tracking search direction (forward `/` vs backward `?`)
+- Displaying search prompt in status line based on direction
+- Handling edge cases like pattern not found and empty patterns
+
+**Current Functionality:**
+Users can press `/` in NORMAL mode to search forward or `?` to search backward. Type the search pattern and press Enter to jump to the match. The cursor moves to the first/last occurrence of the pattern depending on direction. Status line shows the search prompt (`/pattern` or `?pattern`) as you type. Messages display "Pattern found" or "Pattern not found". Search is case-sensitive.
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -370,6 +395,13 @@ Full undo/redo system working. Users can press `u` in NORMAL mode to undo the la
 - **Function Declaration Order:** Got compiler error because `redo_push_operation()` was called before it was defined. Fixed by rearranging function order or adding forward declaration.
 - **Cursor Position vs Buffer Position:** Screen cursor position (cursor_x, cursor_y) doesn't directly map to buffer index. Storing screen coordinates works because gap buffer always inserts at gap_start, which tracks with cursor movement.
 - **Undo/Redo Logic:** Initially had redo_operation() using undo_stack instead of redo_stack, causing wrong behavior. Fixed by ensuring redo pops from redo_stack and pushes to undo_stack.
+
+### Step 10: Search
+- **Match Logic Bug:** Initially had `else { match_count = 0; }` inside the match success check, causing immediate reset after every matching character. This prevented multi-character patterns from ever matching. Fixed by moving the else block to only reset when characters don't match.
+- **Backward Search Algorithm:** Needed to check if pattern ENDS at each position when searching backwards. Required calculating `index - (pattern_len - 1)` to find the start position of matches. Also had to ensure enough characters exist before the current position.
+- **Unsigned Loop with size_t:** Couldn't use `i >= 0` condition with size_t since it's unsigned and always true. Fixed by using `i > 0` and accessing `index = i - 1` within the loop body.
+- **Status Line Parameter:** Had to pass `state.search_forward` (not `bool search_forward`) to `draw_status_line()`. The parameter is the variable value, not a type declaration.
+- **Type Consistency:** Changed `cursor_x` and `cursor_y` from `int` to `size_t` to match function signatures, then had to update printf format specifiers from `%d` to `%zu`.
 
 ## Folder Structure
 ```

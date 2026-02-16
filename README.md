@@ -560,8 +560,8 @@ Helper functions:
 
 ### **Milestone 4: Advanced Features (optional)**
 
-✅ Undo/redo
-✅ Search (`/pattern`)
+* ✅ Undo/redo
+* ✅ Search (`/pattern`)
 * Syntax highlighting
 * Split windows/tabs
 

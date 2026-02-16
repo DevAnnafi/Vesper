@@ -240,29 +240,38 @@ Implemented full undo/redo functionality with Vim-style action-level granularity
 Full undo/redo system working. Users can press `u` in NORMAL mode to undo the last action (entire INSERT session or individual command). Press Ctrl+R to redo. Multiple undo/redo operations work correctly. Cursor position is restored to where it was when the action started. Newlines are properly tracked so multi-line inserts undo/redo correctly. New actions clear the redo stack as expected.
 
 ### Step 10 — Search
-**Status:** In Progress 
+**Status:** Complete 
 
-Implemented search functionality with forward and backward search:
+Implemented full search functionality with forward/backward search, navigation, and highlighting:
 
 - ✅ Capture search query
 - ✅ Find forward match
 - ✅ Find backward match
-- ⏳ Jump to match
-- ⏳ Highlight matches
+- ✅ Jump to match
+- ✅ Highlight matches
 
 **What I Learned:**
 - Adding SEARCH mode to editor mode enum
 - Capturing search patterns in a dedicated buffer
 - Implementing forward search from beginning of buffer
-- Implementing backward search from end of buffer
+- Implementing backward search from end of buffer (reverse pattern matching)
 - Matching patterns while skipping gap region in gap buffer
-- Converting buffer index to screen coordinates (row, col)
+- Converting buffer index to screen coordinates (row, col) and vice versa
+- Converting screen coordinates to buffer index for search positioning
 - Tracking search direction (forward `/` vs backward `?`)
+- Storing last search pattern and direction for `n` and `N` navigation
 - Displaying search prompt in status line based on direction
-- Handling edge cases like pattern not found and empty patterns
+- Implementing `n` key to repeat search in same direction
+- Implementing `N` key to repeat search in opposite direction
+- Modifying render function to accept search state parameters
+- Real-time pattern matching during rendering for highlighting
+- Using ANSI escape codes for text highlighting (`\x1b[43;30m` for yellow background with black text)
+- Resetting colors after highlighting (`\x1b[0m`)
+- Skipping ahead in render loop after printing highlighted match to avoid reprocessing
+- Handling edge cases like pattern not found, empty patterns, and no previous search
 
 **Current Functionality:**
-Users can press `/` in NORMAL mode to search forward or `?` to search backward. Type the search pattern and press Enter to jump to the match. The cursor moves to the first/last occurrence of the pattern depending on direction. Status line shows the search prompt (`/pattern` or `?pattern`) as you type. Messages display "Pattern found" or "Pattern not found". Search is case-sensitive.
+Users can press `/` in NORMAL mode to search forward or `?` to search backward. Type the search pattern and press Enter to jump to the match. While typing in SEARCH mode, all matches are highlighted in yellow with black text. Press `n` to jump to the next match in the search direction, or `N` to jump in the opposite direction. The cursor moves to each occurrence. Status line shows the search prompt (`/pattern` or `?pattern`) as you type. Messages display "Pattern found" or "Pattern not found". Search is case-sensitive. Highlights only appear while actively typing in SEARCH mode and disappear when search completes or is canceled.
 
 ##  Challenges Encountered
 
@@ -398,10 +407,15 @@ Users can press `/` in NORMAL mode to search forward or `?` to search backward. 
 
 ### Step 10: Search
 - **Match Logic Bug:** Initially had `else { match_count = 0; }` inside the match success check, causing immediate reset after every matching character. This prevented multi-character patterns from ever matching. Fixed by moving the else block to only reset when characters don't match.
-- **Backward Search Algorithm:** Needed to check if pattern ENDS at each position when searching backwards. Required calculating `index - (pattern_len - 1)` to find the start position of matches. Also had to ensure enough characters exist before the current position.
+- **Backward Search Algorithm:** Needed to check if pattern ENDS at each position when searching backwards. Required calculating `index - (pattern_len - 1)` to find the start position of matches. Also had to ensure enough characters exist before the current position (`if (index < pattern_len - 1) continue;`).
 - **Unsigned Loop with size_t:** Couldn't use `i >= 0` condition with size_t since it's unsigned and always true. Fixed by using `i > 0` and accessing `index = i - 1` within the loop body.
 - **Status Line Parameter:** Had to pass `state.search_forward` (not `bool search_forward`) to `draw_status_line()`. The parameter is the variable value, not a type declaration.
 - **Type Consistency:** Changed `cursor_x` and `cursor_y` from `int` to `size_t` to match function signatures, then had to update printf format specifiers from `%d` to `%zu`.
+- **Screen to Buffer Index Conversion:** Needed helper function to convert screen coordinates (row, col) to buffer index for `n` and `N` navigation. Had to carefully iterate through buffer while skipping gap and counting newlines.
+- **Variable Scope in Highlighting:** Initially declared `match_found` and `pattern_len` inside a nested block, making them out of scope for later use. Fixed by ensuring all variable declarations are at the correct scope level within the search mode check.
+- **Brace Structure Errors:** Had extra closing braces that closed blocks too early, causing variables to go out of scope. Required careful attention to brace matching and indentation to fix.
+- **Gap Handling in Pattern Matching:** When checking if pattern matches at a position, had to ensure no part of the match spans the gap region. If `check_pos` falls in gap (`check_pos >= gap_start && check_pos < gap_end`), the match is invalid.
+- **Duplicate Function Call:** Accidentally had two `match_pos` declarations in SEARCH mode Enter handler, with second one overwriting the first. Removed duplicate to properly use forward/backward search results.
 
 ## Folder Structure
 ```
@@ -547,7 +561,7 @@ Helper functions:
 ### **Milestone 4: Advanced Features (optional)**
 
 ✅ Undo/redo
-* Search (`/pattern`)
+✅ Search (`/pattern`)
 * Syntax highlighting
 * Split windows/tabs
 

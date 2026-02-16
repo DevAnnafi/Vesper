@@ -12,6 +12,75 @@
 
 EditorState state;
 
+char *c_keywords[] = 
+{
+	"auto",
+	"break",
+	"case",
+	"char",
+	"const",
+	"continue",
+	"default",
+	"do",
+	"double",
+	"else",
+	"enum",
+	"extern",
+	"float",
+	"for",
+	"goto",
+	"if",
+	"int",
+	"long",
+	"register",
+	"return",
+	"short",
+	"signed",
+	"sizeof",
+	"static",
+	"struct",
+	"switch",
+	"typedef",
+	"union",
+	"unsigned",
+	"void",
+	"volatile",
+	"while", 
+	NULL
+};
+
+bool is_c_keyword(char *word) 
+{
+	for (int i = 0; c_keywords[i] != NULL; i++)
+	{
+		if(strcmp(c_keywords[i], word) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_digit(char c)
+{
+	if (c >= '0' && c <= '9')
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool is_operator(char c)
+{
+	if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '<' || c == '>' || c == '=' || c == '!' || c == '&' || c == '|' || c == '^' || c == '~' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == ';' || c == ',' || c == '.') 
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void sigwinch_handler(int sig)
 {
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
@@ -327,9 +396,6 @@ void editorLoop(char *filename)
 
 	GapBuffer *buffer = buffer_create(1024);
 
-	state.language = detect_language(filename);
-
-
 	if (filename != NULL)
 	{
 		FILE *fp = fopen(filename, "r");
@@ -359,7 +425,7 @@ void editorLoop(char *filename)
 			fclose(fp);
 		}
 	}
-
+    
 	while (1)
 	{
 		printf("\x1b[2J");

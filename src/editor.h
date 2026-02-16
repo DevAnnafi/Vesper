@@ -1,5 +1,12 @@
 #ifndef EDITOR_H
 #define EDITOR_H
+#define COLOR_KEYWORD "\x1b[95m"
+#define COLOR_STRING "\x1b[92m"
+#define COLOR_COMMENTS "\x1b[90m"
+#define COLOR_NUMBERS "\x1b[93m"
+#define COLOR_OPERATORS "\x1b[96m"
+#define COLOR_NORMAL "\x1b[37m"
+#define COLOR_RESET "\x1b[0m"
 #include <stdbool.h>
 
 typedef enum 
@@ -16,7 +23,7 @@ typedef struct Action
 	size_t cursor_pos;
 	size_t length;
 	struct Action *next;
-	
+
 } Action;
 
 typedef enum  
@@ -76,6 +83,17 @@ typedef enum
 	LANG_RUST,
 
 } LanguageType;
+
+typedef enum
+{
+	KEYWORDS,
+	STRINGS,
+	COMMENTS,
+	NUMBERS,
+	OPERATORS,
+	NORMAL
+
+} TokenType;
 
 typedef struct {
     size_t cursor_x;     // Cursor column position

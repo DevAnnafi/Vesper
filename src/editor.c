@@ -250,6 +250,52 @@ void redo_operation(UndoManager *um, GapBuffer *buffer, EditorState *state)
 	undo_push_operation_no_clear(um, op.type, op.content, op.position, op.cursor_x, op.cursor_y);
 }
 
+LanguageType detect_language(char *filename)
+{
+	if (filename == NULL)
+	{
+		return LANG_NONE;
+	}
+
+	char *dot = strrchr(filename, '.');
+
+	if (dot == NULL)
+	{
+		return LANG_NONE;
+	}
+
+	char *extension = dot + 1;
+
+	if (strcmp(extension, "c") == 0 || strcmp(extension, "h") == 0)
+	{
+		return LANG_C;
+	}
+	else if (strcmp(extension, "py") == 0)
+	{
+		return LANG_PYTHON;
+	}
+	else if (strcmp(extension, "js") == 0)
+	{
+		return LANG_JAVASCRIPT;
+	}
+	else if (strcmp(extension, "java") == 0)
+	{
+		return LANG_JAVA;
+	}
+	else if (strcmp(extension, "go") == 0)
+	{
+		return LANG_GO;
+	}
+	else if (strcmp(extension, "rs") == 0)
+	{
+		return LANG_RUST;
+	}
+	else
+	{
+		return LANG_NONE;
+	}
+}
+
 void editorLoop(char *filename)
 {
 
@@ -280,6 +326,9 @@ void editorLoop(char *filename)
 	signal(SIGWINCH, sigwinch_handler);
 
 	GapBuffer *buffer = buffer_create(1024);
+
+	state.language = detect_language(filename);
+
 
 	if (filename != NULL)
 	{

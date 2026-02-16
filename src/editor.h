@@ -16,6 +16,7 @@ typedef struct Action
 	size_t cursor_pos;
 	size_t length;
 	struct Action *next;
+	
 } Action;
 
 typedef enum  
@@ -52,6 +53,7 @@ typedef struct
 	size_t insert_start_x;
 	size_t insert_start_y;
 	bool in_insert_session;
+
 } UndoManager;
 	
 typedef enum 
@@ -62,6 +64,18 @@ typedef enum
 	SEARCH
 
 } EditorMode;
+
+typedef enum
+{
+	LANG_NONE,
+	LANG_C,
+	LANG_PYTHON,
+	LANG_JAVA,
+	LANG_GO,
+	LANG_JAVASCRIPT,
+	LANG_RUST,
+
+} LanguageType;
 
 typedef struct {
     size_t cursor_x;     // Cursor column position
@@ -86,6 +100,8 @@ typedef struct {
     bool last_search_forward;
     bool highlight_search;
     char highlight_pattern[256];
+	LanguageType language;
+
 } EditorState;
 
 

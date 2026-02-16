@@ -173,6 +173,66 @@ void extract_word(GapBuffer *buffer, size_t pos, char *word_buffer, size_t max_l
 	word_buffer[word_len] = '\0';
 }
 
+bool is_inside_line_comment(GapBuffer *buffer, size_t pos)
+{
+	size_t line_start = pos;
+
+	while(line_start > 0) 
+	{
+		size_t check_pos = line_start - 1;
+		
+		// Skip if in gap
+		if (check_pos >= buffer->gap_start && check_pos < buffer->gap_end)
+		{
+			line_start--;
+			continue;
+						
+		}
+
+		if (buffer->data[check_pos] == '\n')
+		{
+			break;
+		}
+
+		line_start--;
+	}
+
+	for (size_t i = line_start; i < pos; i++)
+	{
+		// Skip if current position is in gap
+		if (i >= buffer->gap_start && i < buffer->gap_end)
+		{
+			continue;
+		}
+
+		if (buffer->data[i] == '/')
+		{
+			// Now we need to check the NEXT position (i+1)
+			size_t next_pos = i + 1;
+			
+			// Make sure next_pos is not beyond our search range
+			if (next_pos >= pos)
+			{
+				continue;  // Can't check beyond pos
+			}
+			
+			// Skip if next position is in gap
+			if (next_pos >= buffer->gap_start && next_pos < buffer->gap_end)
+			{
+				continue;  // Can't form "//" if second char is in gap
+			}
+			
+			// Now check if next character is also '/'
+			if (buffer->data[next_pos] == '/')
+			{
+				return true;  // Found "//" before pos!
+			}
+		}
+	}
+
+	return false;
+}
+
 void sigwinch_handler(int sig)
 {
 	get_terminal_size(&state.screen_rows, &state.screen_cols);

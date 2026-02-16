@@ -647,6 +647,18 @@ void editorLoop(char *filename)
 			{
 				buffer_delete_char(buffer);
 
+				// Move cursor left
+				if (state.cursor_x > 0)
+				{
+					state.cursor_x--;
+				}
+				else if (state.cursor_y > 0)
+				{
+					// At start of line, move to end of previous line
+					state.cursor_y--;
+					state.cursor_x = buffer_get_line_length(buffer, state.cursor_y);
+				}
+
 				if (state.undo_manager->in_insert_session && state.undo_manager->current_insert_len > 0)
 				{
 					state.undo_manager->current_insert_len--;
@@ -656,6 +668,9 @@ void editorLoop(char *filename)
 			else if (c == 13 || c == 10)
 			{
 				buffer_insert_char(buffer, '\n');
+
+				state.cursor_y++;
+				state.cursor_x = 0;
 
 				// Also track newline in insert buffer
 				if (state.undo_manager->in_insert_session)
@@ -680,6 +695,8 @@ void editorLoop(char *filename)
 			else if (c >= 32 && c <= 126)
 			{
 				buffer_insert_char(buffer, c);
+
+				state.cursor_x++;
 
 				if (state.undo_manager->in_insert_session)
 				{

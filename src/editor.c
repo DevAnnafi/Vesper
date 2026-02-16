@@ -81,6 +81,98 @@ bool is_operator(char c)
 	return false;
 }
 
+bool is_word_char(char c)
+{
+	if (c >= 'a' && c <= 'z')
+	{
+		return true;
+	}
+
+	if (c >= 'A' && c <= 'Z')
+	{
+		return true;
+	}
+
+	if (c >= '0' && c <= '9')
+	{
+		return true;
+	}
+
+	if (c == '_')
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void extract_word(GapBuffer *buffer, size_t pos, char *word_buffer, size_t max_len)
+{
+	size_t word_start = pos;
+
+	while (word_start > 0)
+	{
+		size_t check_pos = word_start - 1;
+		
+		// Skip if in gap
+		if (check_pos >= buffer->gap_start && check_pos < buffer->gap_end)
+		{
+			word_start--;
+			continue;
+		}
+		
+		// Check if it's a word character
+		if (is_word_char(buffer->data[check_pos]))
+		{
+			word_start--;
+		}
+		else
+		{
+			break;  // Found non-word character, stop!
+		}
+	}		
+
+	size_t word_end = pos;
+
+	while (word_end < buffer->capacity)
+	{
+		// Skip if in gap
+		if (word_end >= buffer->gap_start && word_end < buffer->gap_end)
+		{
+			word_end++;
+			continue;
+		}
+		
+		// Check if it's a word character
+		if (is_word_char(buffer->data[word_end]))
+		{
+			word_end++;
+		}
+		else
+		{
+			break;  // Found non-word character, stop!
+		}
+	}
+
+	size_t word_len = 0;
+
+	for (size_t i = word_start; i < word_end && word_len < max_len - 1; i++)
+	{
+		// Skip gap
+		if (i >= buffer->gap_start && i < buffer->gap_end)
+		{
+			continue;
+		}
+		
+		// Copy character
+		word_buffer[word_len] = buffer->data[i];
+		word_len++;
+	}
+
+	// Null terminate
+	word_buffer[word_len] = '\0';
+}
+
 void sigwinch_handler(int sig)
 {
 	get_terminal_size(&state.screen_rows, &state.screen_cols);

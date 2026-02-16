@@ -274,6 +274,8 @@ void editorLoop(char *filename)
 	state.search_forward = true;
 	state.last_search_pattern[0] = '\0';
 	state.last_search_forward = true;
+	state.highlight_search = false;
+	state.highlight_pattern[0] = '\0';
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
 	signal(SIGWINCH, sigwinch_handler);
 
@@ -314,7 +316,7 @@ void editorLoop(char *filename)
 		printf("\x1b[2J");
 		printf("\x1b[H");
 
-		render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols);
+		render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols, state.mode == SEARCH, state.search_buffer);
 		draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer, state.search_buffer, state.search_forward);
 
 		printf("\x1b[%zu;%zuH", state.cursor_y + 1, state.cursor_x + 1);

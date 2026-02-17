@@ -2,16 +2,32 @@
 #include <string.h>
 #include "render.h"
 #include "buffer.h"
+#include "editor.h"
 
 void screen_clear(void)
 {
     printf("\x1b[2J\x1b[H");
 }
 
-void render_text(GapBuffer *buffer, size_t row_offset, size_t screen_rows, size_t col_offset, size_t screen_cols, bool in_search_mode, char *search_pattern)
+const char* get_color_for_token(TokenType type)
+{
+    switch(type)
+    {
+        case KEYWORDS:    return COLOR_KEYWORD;
+        case STRINGS:     return COLOR_STRING;
+        case COMMENTS:    return COLOR_COMMENTS;
+        case NUMBERS:     return COLOR_NUMBERS;
+        case OPERATORS:   return COLOR_OPERATORS;
+        case NORMALTXT:   return COLOR_NORMALTXT;
+        default:          return COLOR_RESET;
+    }
+}
+
+void render_text(GapBuffer *buffer, size_t row_offset, size_t screen_rows, size_t col_offset, size_t screen_cols, bool in_search_mode, char *search_pattern, LanguageType language)
 {
     size_t current_row = 0;
     size_t current_col = 0;
+    TokenType current_token = NORMALTXT;
     
     for (size_t i = 0; i < buffer->capacity; i++)
     {
@@ -75,6 +91,15 @@ void render_text(GapBuffer *buffer, size_t row_offset, size_t screen_rows, size_
             }
             else
             {
+                // Classify the token at position i
+                TokenType token_type = classify_token(buffer, i, language);
+                
+                // Only print color if type changed
+                if (token_type != current_token)
+                {
+                    printf("%s", get_color_for_token(token_type));
+                    current_token = token_type;
+                }
                 printf("%c", c);
             }
         }

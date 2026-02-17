@@ -713,6 +713,8 @@ void editorLoop(char *filename)
 
 	GapBuffer *buffer = buffer_create(1024);
 
+	state.language = detect_language(filename);
+
 	if (filename != NULL)
 	{
 		FILE *fp = fopen(filename, "r");
@@ -748,7 +750,7 @@ void editorLoop(char *filename)
 		printf("\x1b[2J");
 		printf("\x1b[H");
 
-		render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols, state.mode == SEARCH, state.search_buffer);
+		render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols, state.mode == SEARCH, state.search_buffer, state.language);
 		draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer, state.search_buffer, state.search_forward);
 
 		printf("\x1b[%zu;%zuH", state.cursor_y + 1, state.cursor_x + 1);

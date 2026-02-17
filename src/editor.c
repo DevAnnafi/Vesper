@@ -336,6 +336,68 @@ bool is_inside_block_comment(GapBuffer *buffer, size_t pos)
 	return false;
 }
 
+TokenType classify_token(GapBuffer *buffer, size_t pos, LanguageType lang)
+{
+	if (lang != LANG_C)
+    {
+        return NORMALTXT;  // Only highlight C for now
+    }
+    
+    // Step 2: Check if inside string (PRIORITY)
+    if (is_inside_string(buffer, pos))
+    {
+        return STRINGS;
+    }
+    
+    // Step 3: Check if inside line comment
+    if (is_inside_line_comment(buffer, pos))
+    {
+        return COMMENTS;
+    }
+    
+    // Step 4: Check if inside block comment
+    if (is_inside_block_comment(buffer, pos))
+    {
+        return COMMENTS;
+    }
+
+	// Check if position is in gap
+	if (pos >= buffer->gap_start && pos < buffer->gap_end)
+	{
+		return NORMALTXT;  // Can't classify gap
+	}
+
+	char c = buffer->data[pos];
+
+	if (is_digit(c))
+	{
+    	return NUMBERS;
+	}
+
+	if (is_operator(c))
+	{
+		return OPERATORS;
+	}
+
+	if (is_word_char(c))
+	{
+		// Extract the full word
+		char word[256];
+		extract_word(buffer, pos, word, 256);
+		
+		// Check if it's a keyword
+		if (is_c_keyword(word))
+		{
+			return KEYWORDS;
+		}
+		
+		// It's a word, but not a keyword
+		return NORMALTXT;
+	}
+
+	return NORMALTXT;
+}
+
 void sigwinch_handler(int sig)
 {
 	get_terminal_size(&state.screen_rows, &state.screen_cols);

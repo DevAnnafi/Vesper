@@ -5,7 +5,7 @@
 #define COLOR_COMMENTS "\x1b[90m"
 #define COLOR_NUMBERS "\x1b[93m"
 #define COLOR_OPERATORS "\x1b[96m"
-#define COLOR_NORMAL "\x1b[37m"
+#define COLOR_NORMALTXT "\x1b[37m"
 #define COLOR_RESET "\x1b[0m"
 #include <stdbool.h>
 
@@ -91,7 +91,7 @@ typedef enum
 	COMMENTS,
 	NUMBERS,
 	OPERATORS,
-	NORMAL
+	NORMALTXT
 
 } TokenType;
 

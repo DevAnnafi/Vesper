@@ -631,6 +631,57 @@ char* read_api_key()
     return NULL;
 }
 
+void extract_current_line_context(GapBuffer *buffer, size_t cursor_y, size_t cursor_x, char *output, size_t max_len)
+{
+	size_t cursor_pos = buffer_screen_to_index(buffer, cursor_y, cursor_x);
+
+	size_t line_start = cursor_pos;
+
+	while(line_start > 0) 
+	{
+		size_t check_pos = line_start - 1;
+		
+		// Skip if in gap
+		if (check_pos >= buffer->gap_start && check_pos < buffer->gap_end)
+		{
+			line_start--;
+			continue;
+						
+		}
+
+		if (buffer->data[check_pos] == '\n')
+		{
+			break;
+		}
+
+		line_start--;
+
+	}
+
+	size_t output_len = 0;
+
+	for(size_t i = line_start; i < cursor_pos && output_len < max_len - 1; i++)
+	{
+		// Skip gap
+		if (i >= buffer->gap_start && i < buffer->gap_end)
+		{
+			continue;
+		}
+    
+		// Copy character
+		output[output_len] = buffer->data[i];
+		output_len++;
+	}
+
+	output[output_len] = '\0';
+}
+
+
+
+
+
+
+
 void sigwinch_handler(int sig)
 {
 	get_terminal_size(&state.screen_rows, &state.screen_cols);

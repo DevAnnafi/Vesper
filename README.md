@@ -303,7 +303,7 @@ Implemented full syntax highlighting system with token classification and color 
 - Integration of classification system with existing render pipeline
 
 **Current Functionality:**
-Full syntax highlighting working for C files (.c and .h extensions). Keywords (`int`, `void`, `return`, `if`, `for`, etc.) appear in bright magenta. Strings (`"hello"`) appear in bright green. Comments (both `//` and `/* */`) appear in gray. Numbers (`42`, `3.14`) appear in bright yellow. Operators (`+`, `-`, `*`, `=`, etc.) appear in bright cyan. Multi-line block comments spanning multiple lines are fully supported. Token classification uses all helper functions in correct priority order. Colors update dynamically as you type and edit. Syntax highlighting only applies to C files; other file types render without colors.
+Full syntax highlighting working for 6 programming languages! Keywords appear in bright magenta, strings in bright green, comments in gray, numbers in bright yellow, and operators in bright cyan. Language is auto-detected from file extension. Each language has its own keyword list and checker function. C and Java support `//` and `/* */` comments. Python uses `#` for comments. All languages support string detection with proper escape handling. Token classification uses helper functions in correct priority order. Colors update dynamically as you type and edit. Multi-line block comments spanning multiple lines are fully supported. Syntax highlighting only applies to recognized file types; unknown extensions render without colors.
 
 ##  Challenges Encountered
 
@@ -393,7 +393,7 @@ Full syntax highlighting working for C files (.c and .h extensions). Keywords (`
 - **Printable Character Range:** Initially used `c < 126` instead of `c <= 126` when checking for printable characters. The tilde `~` character (ASCII 126) is printable and should be included in the range.
 - **ASCII Values for Special Keys:** Learned that ESC is ASCII 27 and backspace is ASCII 127 (not 8 as initially thought). These are the values returned by `read()` when those keys are pressed.
 
-### Step 6: Navigation (In Progress)
+### Step 6: Navigation 
 - **Escape Sequence Detection:** Learned that arrow keys don't send single characters but sequences of three bytes (ESC, '[', direction). Had to read multiple times after detecting ESC to determine if it's an arrow key or just ESC.
 - **ESC vs Arrow Key Confusion:** Initially struggled with distinguishing between user pressing ESC key (mode switch) vs arrow key sequence (also starts with ESC). Solved by checking if ESC is followed by '[' - if not, it's just ESC key.
 - **Placement of Arrow Detection:** Had to place arrow key handling before mode checking so arrows work in both NORMAL and INSERT modes. If placed inside mode blocks, would need duplicate code.
@@ -459,7 +459,9 @@ Full syntax highlighting working for C files (.c and .h extensions). Keywords (`
 - **Function Signature Updates:** Adding `LanguageType language` parameter to `render_text()` required updating declaration in header file, definition in source file, AND all call sites.
 - **Include Dependencies:** `editor.h` needed `#include "buffer.h"` so function declarations using `GapBuffer*` would compile. Missing this caused "unknown type" errors.
 - **Enum Value Matching:** Case values in `get_color_for_token()` switch statement must EXACTLY match `TokenType` enum names - even capitalization matters.
-
+- **Multi-Language Keyword Management:** Added 5 more languages (Python, JavaScript, Java, Go, Rust) with separate keyword arrays and checker functions. Required careful organization to keep code maintainable with 6 different keyword lists totaling 225 keywords.
+- **Typo in Assignment:** Had `is_keyword - true` instead of `is_keyword = true` for Go language check, causing keywords not to be detected. Easy typo to make when typing quickly.
+- **Missing Return After Keyword Check:** After checking all languages, forgot to return KEYWORDS when is_keyword was true. All the keyword checking was happening but not returning the right value.
 
 
 ## Folder Structure

@@ -49,11 +49,177 @@ char *c_keywords[] =
 	NULL
 };
 
+
+char *python_keywords[] = 
+{
+	"and", "as", "assert", "async", "await",
+	"break", "class", "continue",
+	"def", "del",
+	"elif", "else", "except",
+	"False", "finally", "for", "from",
+	"global",
+	"if", "import", "in", "is",
+	"lambda",
+	"None", "nonlocal", "not",
+	"or",
+	"pass",
+	"raise", "return",
+	"True", "try",
+	"while", "with",
+	"yield",
+	NULL
+};
+
+
+char *javascript_keywords[] = 
+{
+	"abstract", "arguments", "await",
+	"break",
+	"case", "catch", "class", "const", "continue",
+	"debugger", "default", "delete", "do",
+	"else", "enum", "eval", "export", "extends",
+	"false", "finally", "for", "function",
+	"if", "implements", "import", "in", "instanceof", "interface",
+	"let",
+	"new", "null",
+	"package", "private", "protected", "public",
+	"return",
+	"static", "super", "switch",
+	"this", "throw", "true", "try", "typeof",
+	"var", "void",
+	"while", "with",
+	"yield",
+	NULL
+};
+
+
+char *java_keywords[] = 
+{
+	"abstract", "assert",
+	"boolean", "break", "byte",
+	"case", "catch", "char", "class", "const", "continue",
+	"default", "do", "double",
+	"else", "enum", "extends",
+	"false", "final", "finally", "float", "for",
+	"goto",
+	"if", "implements", "import", "instanceof", "int", "interface",
+	"long",
+	"native", "new", "null",
+	"package", "private", "protected", "public",
+	"return",
+	"short", "static", "strictfp", "super", "switch", "synchronized",
+	"this", "throw", "throws", "transient", "true", "try",
+	"void", "volatile",
+	"while",
+	NULL
+};
+
+
+char *go_keywords[] = 
+{
+	"break",
+	"case", "chan", "const", "continue",
+	"default", "defer",
+	"else",
+	"fallthrough", "for", "func",
+	"go", "goto",
+	"if", "import", "interface",
+	"map",
+	"package",
+	"range", "return",
+	"select", "struct", "switch",
+	"type",
+	"var",
+	NULL
+};
+
+
+char *rust_keywords[] = 
+{
+	"as", "async", "await",
+	"break",
+	"const", "continue", "crate",
+	"dyn",
+	"else", "enum", "extern",
+	"false", "fn", "for",
+	"if", "impl", "in",
+	"let", "loop",
+	"match", "mod", "move", "mut",
+	"pub",
+	"ref", "return",
+	"self", "Self", "static", "struct", "super",
+	"trait", "true", "type",
+	"unsafe", "use",
+	"where", "while",
+	"yield",
+	NULL
+};
+
 bool is_c_keyword(char *word) 
 {
 	for (int i = 0; c_keywords[i] != NULL; i++)
 	{
 		if(strcmp(c_keywords[i], word) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_python_keyword(char *word) 
+{
+	for (int i = 0; python_keywords[i] != NULL; i++)
+	{
+		if(strcmp(python_keywords[i], word) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_java_keyword(char *word) 
+{
+	for (int i = 0; java_keywords[i] != NULL; i++)
+	{
+		if(strcmp(java_keywords[i], word) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_go_keyword(char *word) 
+{
+	for (int i = 0; go_keywords[i] != NULL; i++)
+	{
+		if(strcmp(go_keywords[i], word) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_rust_keyword(char *word) 
+{
+	for (int i = 0; rust_keywords[i] != NULL; i++)
+	{
+		if(strcmp(rust_keywords[i], word) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_javascript_keyword(char *word) 
+{
+	for (int i = 0; javascript_keywords[i] != NULL; i++)
+	{
+		if(strcmp(javascript_keywords[i], word) == 0)
 		{
 			return true;
 		}
@@ -338,7 +504,7 @@ bool is_inside_block_comment(GapBuffer *buffer, size_t pos)
 
 TokenType classify_token(GapBuffer *buffer, size_t pos, LanguageType lang)
 {
-	if (lang != LANG_C)
+	if (lang == LANG_NONE)
     {
         return NORMALTXT;  // Only highlight C for now
     }
@@ -381,16 +547,42 @@ TokenType classify_token(GapBuffer *buffer, size_t pos, LanguageType lang)
 
 	if (is_word_char(c))
 	{
-		// Extract the full word
 		char word[256];
 		extract_word(buffer, pos, word, 256);
 		
-		// Check if it's a keyword
-		if (is_c_keyword(word))
+		// Check based on language
+		bool is_keyword = false;
+		
+		if (lang == LANG_C && is_c_keyword(word))
+		{
+			is_keyword = true;
+		}
+		else if (lang == LANG_PYTHON && is_python_keyword(word))
+		{
+			is_keyword = true;
+		}
+		else if (lang == LANG_JAVA && is_java_keyword(word))
+		{
+			is_keyword = true;
+		}
+		else if (lang == LANG_GO && is_go_keyword(word))
+		{
+			is_keyword = true;
+		}
+		else if (lang == LANG_JAVASCRIPT && is_javascript_keyword(word))
+		{
+			is_keyword = true;
+		}
+		else if (lang == LANG_RUST && is_rust_keyword(word))
+		{
+			is_keyword = true;
+		}
+
+		if (is_keyword)
 		{
 			return KEYWORDS;
 		}
-		
+
 		// It's a word, but not a keyword
 		return NORMALTXT;
 	}

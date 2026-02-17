@@ -233,6 +233,70 @@ bool is_inside_line_comment(GapBuffer *buffer, size_t pos)
 	return false;
 }
 
+bool is_inside_string(GapBuffer *buffer, size_t pos)
+{
+	size_t line_start = pos;
+
+	while(line_start > 0) 
+	{
+		size_t check_pos = line_start - 1;
+		
+		// Skip if in gap
+		if (check_pos >= buffer->gap_start && check_pos < buffer->gap_end)
+		{
+			line_start--;
+			continue;
+						
+		}
+
+		if (buffer->data[check_pos] == '\n')
+		{
+			break;
+		}
+
+		line_start--;
+	}
+
+	int quote_count = 0;
+
+	for (size_t i = line_start; i < pos; i++)
+	{
+		if (i >= buffer->gap_start && i < buffer->gap_end)
+		{
+			continue;
+		}
+
+		if (buffer->data[i] == '"')
+		{
+			bool is_escaped = false;
+
+			if (i > line_start)
+			{
+				size_t prev_pos = i - 1;
+
+				// Make sure previous position is not in gap
+				if (prev_pos < buffer->gap_start || prev_pos >= buffer->gap_end)
+				{
+					// Check if previous character is backslash
+					if (buffer->data[prev_pos] == '\\')
+					{
+						is_escaped = true;
+					}
+				}
+			}
+			
+			// If NOT escaped, count it
+			if (!is_escaped)
+			{
+				quote_count++;
+			}
+		}
+	}	
+
+	return (quote_count % 2 == 1);
+}
+
+
 void sigwinch_handler(int sig)
 {
 	get_terminal_size(&state.screen_rows, &state.screen_cols);

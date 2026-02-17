@@ -8,6 +8,7 @@
 #define COLOR_NORMALTXT "\x1b[37m"
 #define COLOR_RESET "\x1b[0m"
 #include <stdbool.h>
+#include "buffer.h"
 
 typedef enum 
 {
@@ -122,6 +123,7 @@ typedef struct {
 
 } EditorState;
 
+TokenType classify_token(GapBuffer *buffer, size_t pos, LanguageType lang);
 
 void editorLoop(char *filename);
 

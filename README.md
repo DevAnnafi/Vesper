@@ -273,6 +273,38 @@ Implemented full search functionality with forward/backward search, navigation, 
 **Current Functionality:**
 Users can press `/` in NORMAL mode to search forward or `?` to search backward. Type the search pattern and press Enter to jump to the match. While typing in SEARCH mode, all matches are highlighted in yellow with black text. Press `n` to jump to the next match in the search direction, or `N` to jump in the opposite direction. The cursor moves to each occurrence. Status line shows the search prompt (`/pattern` or `?pattern`) as you type. Messages display "Pattern found" or "Pattern not found". Search is case-sensitive. Highlights only appear while actively typing in SEARCH mode and disappear when search completes or is canceled.
 
+### Step 11 — Syntax Highlighting
+**Status:** Complete 
+
+Implemented full syntax highlighting system with token classification and color rendering:
+
+- ✅ Detect file type from extension
+- ✅ Define color scheme (ANSI codes)
+- ✅ Define syntax rules for C language
+- ✅ Token classification (keywords, strings, comments, numbers)
+- ✅ Apply highlighting during rendering
+- ✅ Handle multi-line comments
+
+**What I Learned:**
+- File type detection using `strrchr()` to find last dot in filename
+- Defining vibrant ANSI color scheme using `#define` macros
+- Creating comprehensive C keyword list with 32 keywords
+- Building helper functions for syntax classification (is_c_keyword, is_digit, is_operator, is_word_char)
+- Extracting complete words from buffer by scanning backwards and forwards for word boundaries
+- Detecting if position is inside string by counting unescaped quotes (odd = inside, even = outside)
+- Handling escaped quotes with backslash check
+- Detecting line comments by scanning from line start for `//` sequence
+- Detecting block comments by scanning backwards for `/*` or `*/` (whichever comes first determines state)
+- Token classification hierarchy: strings → comments → digits → operators → keywords → normal text
+- Modifying render loop to classify each character and apply colors dynamically
+- Only printing color codes when token type changes (optimization)
+- Passing language type through function signatures to enable syntax highlighting
+- Using switch statements to map token types to ANSI color codes
+- Integration of classification system with existing render pipeline
+
+**Current Functionality:**
+Full syntax highlighting working for C files (.c and .h extensions). Keywords (`int`, `void`, `return`, `if`, `for`, etc.) appear in bright magenta. Strings (`"hello"`) appear in bright green. Comments (both `//` and `/* */`) appear in gray. Numbers (`42`, `3.14`) appear in bright yellow. Operators (`+`, `-`, `*`, `=`, etc.) appear in bright cyan. Multi-line block comments spanning multiple lines are fully supported. Token classification uses all helper functions in correct priority order. Colors update dynamically as you type and edit. Syntax highlighting only applies to C files; other file types render without colors.
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -416,6 +448,19 @@ Users can press `/` in NORMAL mode to search forward or `?` to search backward. 
 - **Brace Structure Errors:** Had extra closing braces that closed blocks too early, causing variables to go out of scope. Required careful attention to brace matching and indentation to fix.
 - **Gap Handling in Pattern Matching:** When checking if pattern matches at a position, had to ensure no part of the match spans the gap region. If `check_pos` falls in gap (`check_pos >= gap_start && check_pos < gap_end`), the match is invalid.
 - **Duplicate Function Call:** Accidentally had two `match_pos` declarations in SEARCH mode Enter handler, with second one overwriting the first. Removed duplicate to properly use forward/backward search results.
+
+### Step 11: Syntax Highlighting
+- **Missing Language Detection Call:** Implemented all the syntax highlighting code but colors weren't appearing because `detect_language()` was never called, leaving `state.language` uninitialized as `LANG_NONE`. Fixed by adding `state.language = detect_language(filename);` after buffer creation.
+- **Color Constant Typo:** Had `#define COLOR_NORMALTEXT` but used `COLOR_NORMALTXT` in code, causing undefined constant. Fixed by renaming define to match usage.
+- **Extract Word Boundary Logic:** Finding word start/end while skipping gap required careful loop logic - needed separate `check_pos` variable and proper break conditions when hitting non-word characters.
+- **Escaped Quote Detection:** Checking if quote is escaped required looking at previous character, but had to ensure previous position wasn't in gap and was valid (i > line_start).
+- **Block Comment Direction:** Initially confused about scanning backwards - needed to check for `*/` BEFORE `/*` because finding closing comment first means we're outside the comment.
+- **Token Classification Order:** Order matters! Must check strings and comments FIRST (highest priority), then character types (digits, operators), then keywords. Wrong order would classify parts of strings/comments as keywords.
+- **Function Signature Updates:** Adding `LanguageType language` parameter to `render_text()` required updating declaration in header file, definition in source file, AND all call sites.
+- **Include Dependencies:** `editor.h` needed `#include "buffer.h"` so function declarations using `GapBuffer*` would compile. Missing this caused "unknown type" errors.
+- **Enum Value Matching:** Case values in `get_color_for_token()` switch statement must EXACTLY match `TokenType` enum names - even capitalization matters.
+
+
 
 ## Folder Structure
 ```
@@ -562,7 +607,7 @@ Helper functions:
 
 * ✅ Undo/redo
 * ✅ Search (`/pattern`)
-* Syntax highlighting
+* ✅ Syntax highlighting
 * Split windows/tabs
 
 ### **Milestone 5: AI Assistant (later)**

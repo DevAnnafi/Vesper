@@ -296,6 +296,45 @@ bool is_inside_string(GapBuffer *buffer, size_t pos)
 	return (quote_count % 2 == 1);
 }
 
+bool is_inside_block_comment(GapBuffer *buffer, size_t pos)
+{
+	for (size_t i = pos; i > 0; i--)
+	{
+		size_t check_pos = i - 1;
+
+		if (check_pos >= buffer->gap_start && check_pos < buffer->gap_end)
+		{
+			continue;
+		}
+
+		size_t next_pos = check_pos + 1;
+
+		// Make sure next_pos is not in gap and is valid
+        if (next_pos >= buffer->capacity)
+        {
+            continue;
+        }
+        
+        if (next_pos >= buffer->gap_start && next_pos < buffer->gap_end)
+        {
+            continue;
+        }
+        
+        // Now check for "*/" (closing comment)
+        if (buffer->data[check_pos] == '*' && buffer->data[next_pos] == '/')
+        {
+            return false;  // Found closing, we're outside
+        }
+        
+        // Check for "/*" (opening comment)
+        if (buffer->data[check_pos] == '/' && buffer->data[next_pos] == '*')
+        {
+            return true;  // Found opening, we're inside
+        }
+	}
+
+	return false;
+}
 
 void sigwinch_handler(int sig)
 {

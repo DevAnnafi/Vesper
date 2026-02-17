@@ -120,6 +120,8 @@ typedef struct {
     bool highlight_search;
     char highlight_pattern[256];
 	char *api_key;
+	bool ghost_text_active;
+	char ai_suggestion[1024];
 	LanguageType language;
 
 } EditorState;

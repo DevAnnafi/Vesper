@@ -941,6 +941,8 @@ void editorLoop(char *filename)
 	state.last_search_forward = true;
 	state.highlight_search = false;
 	state.highlight_pattern[0] = '\0';
+	state.ai_suggestion[0] = '\0';
+	state.ghost_text_active = false;
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
 	signal(SIGWINCH, sigwinch_handler);
 	state.api_key = read_api_key();
@@ -1315,6 +1317,10 @@ void editorLoop(char *filename)
 
 				state.undo_manager->in_insert_session = false;
 				state.mode = NORMAL;
+			}
+			else if (c == 0)
+			{
+				state.message = "AI suggesstion requested...";
 			}
 			// If BACKSPACE is clicked delete the character
 			else if (c == 127)

@@ -590,6 +590,47 @@ TokenType classify_token(GapBuffer *buffer, size_t pos, LanguageType lang)
 	return NORMALTXT;
 }
 
+char* read_api_key()
+{
+    // Try environment variable first
+    char *key = getenv("ANTHROPIC_API_KEY");
+    if (key != NULL && strlen(key) > 0)
+    {
+        // Found in environment, return a copy
+        return strdup(key);
+    }
+    
+    // Try reading from config file
+    char config_path[1024];
+    snprintf(config_path, sizeof(config_path), "%s/.vesperrc", getenv("HOME"));
+    
+    FILE *fp = fopen(config_path, "r");
+    if (fp != NULL)
+    {
+        char line[1024];
+        while (fgets(line, sizeof(line), fp))
+        {
+            // Look for ANTHROPIC_API_KEY=...
+            if (strncmp(line, "ANTHROPIC_API_KEY=", 18) == 0)
+            {
+                // Extract key (after the =)
+                char *key_start = line + 18;
+                
+                // Remove newline if present
+                char *newline = strchr(key_start, '\n');
+                if (newline) *newline = '\0';
+                
+                fclose(fp);
+                return strdup(key_start);
+            }
+        }
+        fclose(fp);
+    }
+    
+    // Not found anywhere
+    return NULL;
+}
+
 void sigwinch_handler(int sig)
 {
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
@@ -902,6 +943,13 @@ void editorLoop(char *filename)
 	state.highlight_pattern[0] = '\0';
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
 	signal(SIGWINCH, sigwinch_handler);
+	state.api_key = read_api_key();
+
+	if (state.api_key == NULL)
+	{
+		fprintf(stderr, "Warning: ANTHROPIC_API_KEY not found!\n");
+		fprintf(stderr, "Set environment variable or create ~/.vesperrc\n");
+	}
 
 	GapBuffer *buffer = buffer_create(1024);
 
@@ -1483,4 +1531,13 @@ void editorLoop(char *filename)
 	}
 
 	scroll();
+
+	scroll();
+    
+    // Free API key
+    if (state.api_key != NULL)
+    {
+        free(state.api_key);
+        state.api_key = NULL;
+    }
 }

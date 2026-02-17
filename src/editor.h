@@ -119,6 +119,7 @@ typedef struct {
     bool last_search_forward;
     bool highlight_search;
     char highlight_pattern[256];
+	char *api_key;
 	LanguageType language;
 
 } EditorState;

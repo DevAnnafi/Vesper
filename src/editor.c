@@ -201,7 +201,7 @@ char* call_claude_api(char *context, char *api_key)
     "{"
     "\"model\":\"claude-sonnet-4-20250514\","
     "\"max_tokens\":200,"
-    "\"messages\":[{\"role\":\"user\",\"content\":\"Complete this code:\\n%s\"}]"
+    "\"messages\":[{\"role\":\"user\",\"content\":\"Complete this code, reply with ONLY the completion code, no explanation, no markdown, no backticks:\\n%s\"}]"
     "}",
     context);
 
@@ -244,8 +244,52 @@ char* call_claude_api(char *context, char *api_key)
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
 
-	return response.data;
-
+	char *text_start = strstr(response.data, "\"text\":\"");
+	if (text_start != NULL)
+	{
+		text_start += 8;
+    
+    // Find end by scanning for \" (escaped quote followed by nothing more)
+    // Better: find the last "}] before stop_reason
+    char *stop = strstr(response.data, "\"stop_reason\"");
+    if (stop != NULL)
+    {
+        // Work backwards from stop_reason to find closing "}
+        while (stop > text_start && !(*stop == '"' && *(stop-1) == '}'))
+        {
+            stop--;
+        }
+        if (stop > text_start)
+        {
+            *(stop - 1) = '\0';
+        }
+    }
+    
+    char *result = strdup(text_start);
+    // Convert escape sequences
+    char *src = result;
+    char *dst = result;
+    while (*src)
+    {
+        if (*src == '\\' && *(src+1) == 'n')
+        {
+            *dst = '\n'; src += 2;
+        }
+        else if (*src == '\\' && *(src+1) == '"')
+        {
+            *dst = '"'; src += 2;
+        }
+        else
+        {
+            *dst = *src; src++;
+        }
+        dst++;
+    }
+    *dst = '\0';
+    
+    free(response.data);
+    return result;
+   }
 }
 
 bool is_c_keyword(char *word) 
@@ -1132,6 +1176,15 @@ void editorLoop(char *filename)
 		printf("\x1b[H");
 
 		render_text(buffer, state.row_offset, state.screen_rows - 1, state.col_offset, state.screen_cols, state.mode == SEARCH, state.search_buffer, state.language);
+
+		if (state.ghost_text_active)
+		{
+	
+			printf("\x1b[2m%s\x1b[0m", state.ai_suggestion);
+			fflush(stdout);
+			printf("\x1b[%zu;%zuH", state.cursor_y + 1, state.cursor_x + 1);
+		}
+
 		draw_status_line(state.cursor_x, state.cursor_y, state.screen_rows, state.mode, state.message, state.command_buffer, state.search_buffer, state.search_forward);
 
 		printf("\x1b[%zu;%zuH", state.cursor_y + 1, state.cursor_x + 1);
@@ -1459,6 +1512,11 @@ void editorLoop(char *filename)
 			}
 			else if (c == 0)
 			{
+				if (state.ghost_text_active)
+				{
+					continue;
+				}
+
 				if (state.api_key == NULL)
 				{
 					state.message = "Error: API key not configured";

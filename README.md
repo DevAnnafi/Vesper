@@ -6,7 +6,7 @@ A terminal-based, modal text editor inspired by Vim/Neovim, built from scratch i
 ## Progress
 
 ### Step 1 - Terminal Control (Raw Mode)
-**Status:** Complete ✅
+**Status:** Complete 
 
 Successfully implemented low-level terminal control for raw mode input processing:
 
@@ -25,7 +25,7 @@ Successfully implemented low-level terminal control for raw mode input processin
 - Cleanup handlers with `atexit()` for graceful exits
 
 ###  Step 2 — Main Editor Loop
-**Status:** Complete ✅
+**Status:** Complete 
 
 Built the core event loop that drives the editor:
 
@@ -44,7 +44,7 @@ Built the core event loop that drives the editor:
 - Proper update flow: clear → draw → position → read input → update state
 
 ### Step 3 — Text Buffer (Gap Buffer)
-**Status:** Complete ✅
+**Status:** Complete 
 
 Implemented the gap buffer data structure for efficient text editing:
 
@@ -71,7 +71,7 @@ Implemented the gap buffer data structure for efficient text editing:
 The gap buffer fully supports insertion, deletion, cursor movement, and automatic growth. The buffer dynamically doubles in size when full, correctly preserving all text content. Comprehensive testing confirms no memory corruption across all operations. Ready to integrate with the main editor.
 
 ### Step 4 — Screen Rendering
-**Status:** Complete ✅
+**Status:** Complete 
 
 Built a complete screen rendering system to display buffer content:
 
@@ -101,7 +101,7 @@ Built a complete screen rendering system to display buffer content:
 Complete screen rendering system with viewport scrolling. Can display text from the gap buffer with proper vertical and horizontal scrolling when content exceeds terminal dimensions. Status line at bottom shows real-time cursor position. The editor correctly handles terminal resize events and adjusts the viewport accordingly. Text rendering is optimized to only draw visible content within the current viewport.
 
 ### Step 5 — Modal Editing (Vim-like)
-**Status:** Complete ✅
+**Status:** Complete 
 
 Implemented Vim-style modal editing with NORMAL and INSERT modes:
 
@@ -305,6 +305,39 @@ Implemented full syntax highlighting system with token classification and color 
 **Current Functionality:**
 Full syntax highlighting working for 6 programming languages! Keywords appear in bright magenta, strings in bright green, comments in gray, numbers in bright yellow, and operators in bright cyan. Language is auto-detected from file extension. Each language has its own keyword list and checker function. C and Java support `//` and `/* */` comments. Python uses `#` for comments. All languages support string detection with proper escape handling. Token classification uses helper functions in correct priority order. Colors update dynamically as you type and edit. Multi-line block comments spanning multiple lines are fully supported. Syntax highlighting only applies to recognized file types; unknown extensions render without colors.
 
+### Step 12 — AI Code Suggestions
+**Status:** Complete 
+
+Implemented inline AI-powered code suggestions using the Claude API:
+
+- ✅ Define manual trigger key (Ctrl+Space)
+- ✅ Extract visible buffer context (current line up to cursor)
+- ✅ Send context externally via Claude API using libcurl
+- ✅ Receive and parse suggestion from JSON response
+- ✅ Render inline ghost text (dim gray) at cursor position
+- ✅ Accept suggestion (Tab key inserts into buffer)
+- ✅ Reject suggestion (Esc clears ghost text)
+- ✅ Ensure no silent edits (buffer only modified on Tab)
+
+**What I Learned:**
+- Making HTTP requests in C using libcurl
+- Writing a write_callback to accumulate chunked API responses
+- Building JSON request bodies with snprintf
+- Parsing JSON responses manually with strstr to extract text fields
+- Converting escape sequences (`\n`, `\"`) in API responses to real characters
+- Storing API keys securely via environment variables and ~/.vesperrc
+- Rendering ghost text using ANSI dim codes (`\x1b[2m` / `\x1b[0m`)
+- Using boolean flags to track suggestion state
+- Linking external libraries at compile time with `-lcurl`
+
+**How It Works:**
+1. Press Ctrl+Space in INSERT mode to request a suggestion
+2. Editor extracts the current line up to cursor as context
+3. Sends context to Claude API with instruction to complete the code
+4. Suggestion appears in dim gray after cursor (ghost text)
+5. Press Tab to accept and insert into buffer
+6. Press Esc to reject and dismiss
+
 ##  Challenges Encountered
 
 ### Step 1: Terminal Control
@@ -463,6 +496,14 @@ Full syntax highlighting working for 6 programming languages! Keywords appear in
 - **Typo in Assignment:** Had `is_keyword - true` instead of `is_keyword = true` for Go language check, causing keywords not to be detected. Easy typo to make when typing quickly.
 - **Missing Return After Keyword Check:** After checking all languages, forgot to return KEYWORDS when is_keyword was true. All the keyword checking was happening but not returning the right value.
 
+### Step 12: AI Code Suggestions
+- **API Key Not Found:** `getenv()` returned NULL even though the key was set because it was stored with quotes in `.env` file (`"sk-ant-..."` instead of `sk-ant-...`). Removing the quotes fixed it. Also learned that `source .env` only applies to the current terminal session — must run the editor from the same terminal where the key is exported.
+- **libcurl Write Callback:** The write_callback must return the exact number of bytes processed or libcurl aborts the transfer. Used `realloc()` to grow the response buffer as chunks arrive.
+- **JSON Parsing Without a Library:** Used `strstr()` to find `"text":"` in the raw JSON response. Had accidentally placed `free(response.data); return NULL;` before the parsing code, causing all responses to return empty. Removing those two lines fixed it.
+- **Escape Sequence Conversion:** The API returns `\n` as two literal characters (backslash + n) inside JSON strings. Had to manually walk the result string converting `\n` → newline and `\"` → quote.
+- **Ghost Text Not Rendering:** Ghost text was printing but immediately getting overwritten. Fixed by moving the ghost text render block before `draw_status_line()` in the main loop.
+- **VS Code Intercepting Ctrl+Space:** VS Code's integrated terminal captures Ctrl+Space for its own autocomplete popup before it reaches the editor. Had to run the editor in Terminal.app outside VS Code to test properly.
+- **Repeated API Calls:** Ctrl+Space was triggering multiple API calls on each keypress. Fixed by adding a guard at the top of the handler: if `ghost_text_active` is already true, skip with `continue`.
 
 ## Folder Structure
 ```
@@ -614,6 +655,7 @@ Helper functions:
 
 ### **Milestone 5: AI Assistant (later)**
 
-* Inline suggestions
-* Ghost text rendering
-* Accept/cancel
+* ✅ Inline suggestions
+* ✅ Ghost text rendering
+* ✅ Accept/cancel
+* ✅ No silent edits

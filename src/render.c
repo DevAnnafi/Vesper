@@ -4,6 +4,8 @@
 #include "buffer.h"
 #include "editor.h"
 
+extern EditorState state;
+
 void screen_clear(void)
 {
     printf("\x1b[2J\x1b[H");

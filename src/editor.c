@@ -5,10 +5,13 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <curl/curl.h>
 #include "terminal.h"
 #include "editor.h"
 #include "render.h"
 #include "buffer.h"
+
+
 
 EditorState state;
 
@@ -154,6 +157,98 @@ char *rust_keywords[] =
 	"yield",
 	NULL
 };
+
+struct ResponseBuffer
+{
+	char *data;
+	size_t size;
+};
+
+// Callback function for libcurl - receives response data
+size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+    size_t total_size = size * nmemb;
+    struct ResponseBuffer *response = (struct ResponseBuffer *)userp;
+    
+    // Reallocate buffer to fit new data
+    char *ptr = realloc(response->data, response->size + total_size + 1);
+    if (ptr == NULL) {
+        return 0;  // Out of memory
+    }
+    
+    response->data = ptr;
+    memcpy(&(response->data[response->size]), contents, total_size);
+    response->size += total_size;
+    response->data[response->size] = '\0';
+    
+    return total_size;
+}
+
+char* call_claude_api(char *context, char *api_key)
+{
+	struct ResponseBuffer response;
+	response.data = NULL;
+	response.size = 0;
+
+	CURL *curl = curl_easy_init();
+
+	if (curl == NULL)
+	{
+		return NULL;	
+	}
+
+	char json[4096];
+
+	snprintf(json, sizeof(json),
+    "{"
+    "\"model\":\"claude-sonnet-4-20250514\","
+    "\"max_tokens\":200,"
+    "\"messages\":[{\"role\":\"user\",\"content\":\"Complete this code:\\n%s\"}]"
+    "}",
+    context);
+
+	char auth_header[512];
+	snprintf(auth_header, sizeof(auth_header), "x-api-key: %s", api_key);
+
+	struct curl_slist *headers = NULL;
+	
+	headers = curl_slist_append(headers, auth_header);
+	
+	headers = curl_slist_append(headers, "anthropic-version: 2023-06-01");
+
+	headers = curl_slist_append(headers, "content-type: application/json");
+
+	curl_easy_setopt(curl, CURLOPT_URL, "https://api.anthropic.com/v1/messages");
+
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
+
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+	CURLcode res = curl_easy_perform(curl);
+
+	if (res != CURLE_OK)
+	{
+		curl_slist_free_all(headers);
+		curl_easy_cleanup(curl);
+		
+		if (response.data != NULL)
+		{
+			free(response.data);
+		}
+
+		return NULL;
+	}
+
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	return response.data;
+
+}
 
 bool is_c_keyword(char *word) 
 {
@@ -675,12 +770,6 @@ void extract_current_line_context(GapBuffer *buffer, size_t cursor_y, size_t cur
 
 	output[output_len] = '\0';
 }
-
-
-
-
-
-
 
 void sigwinch_handler(int sig)
 {

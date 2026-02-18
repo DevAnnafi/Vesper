@@ -11,8 +11,6 @@
 #include "render.h"
 #include "buffer.h"
 
-
-
 EditorState state;
 
 char *c_keywords[] = 
@@ -1085,6 +1083,7 @@ void editorLoop(char *filename)
 	state.ghost_text_active = false;
 	get_terminal_size(&state.screen_rows, &state.screen_cols);
 	signal(SIGWINCH, sigwinch_handler);
+	fprintf(stderr, "env check: %s\n", getenv("ANTHROPIC_API_KEY") ? "SET" : "NULL");
 	state.api_key = read_api_key();
 
 	if (state.api_key == NULL)
@@ -1460,7 +1459,43 @@ void editorLoop(char *filename)
 			}
 			else if (c == 0)
 			{
-				state.message = "AI suggesstion requested...";
+				if (state.api_key == NULL)
+				{
+					state.message = "Error: API key not configured";
+					continue;
+				}
+
+				char context[532];
+				extract_current_line_context(buffer, state.cursor_y, state.cursor_x, context, sizeof(context));
+
+				state.message = "Requesting AI suggesstion...";
+
+				char *response = call_claude_api(context, state.api_key);
+
+				// TEMPORARY DEBUG - print to stderr so it doesn't mess up the screen
+				fprintf(stderr, "\n=== DEBUG ===\n");
+				fprintf(stderr, "Context sent: '%s'\n", context);
+				fprintf(stderr, "Response received: %s\n", response ? response : "NULL");
+				fprintf(stderr, "=============\n");
+
+
+				if (response != NULL)
+    			{
+					// Copy to suggestion buffer (truncate if too long)
+					strncpy(state.ai_suggestion, response, sizeof(state.ai_suggestion) - 1);
+					state.ai_suggestion[sizeof(state.ai_suggestion) - 1] = '\0';
+					
+					// Free the response
+					free(response);
+					
+					// Activate ghost text
+					state.ghost_text_active = true;
+					state.message = "Suggestion ready (Tab to accept, Esc to reject)";
+				}
+				else
+				{
+					state.message = "Error: Failed to get AI suggestion";
+				}
 			}
 			// If BACKSPACE is clicked delete the character
 			else if (c == 127)

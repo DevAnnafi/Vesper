@@ -97,12 +97,24 @@ typedef enum
 } TokenType;
 
 typedef struct {
+
+	GapBuffer *buffer;
+	size_t cursor_x, cursor_y;
+	size_t row_offset, col_offset;
+	char *filename;
+	UndoManager *undo_manager;
+	LanguageType language;
+	bool modified;
+
+} Tab;
+
+typedef struct {
     size_t cursor_x;     // Cursor column position
     size_t cursor_y;     // Cursor row position
     size_t screen_rows;  // Terminal height
     size_t screen_cols;  // Terminal width
-    size_t row_offset; // Line in the file at the top of the screen
-    size_t col_offset;
+	size_t row_offset;
+	size_t col_offset;
     EditorMode mode;
     char *message;
     char command_buffer[256];
@@ -123,7 +135,10 @@ typedef struct {
 	bool ghost_text_active;
 	char ai_suggestion[1024];
 	LanguageType language;
-
+	Tab *tabs;
+	size_t tab_count;
+	size_t tab_capacity;
+	size_t active_tab;
 } EditorState;
 
 TokenType classify_token(GapBuffer *buffer, size_t pos, LanguageType lang);

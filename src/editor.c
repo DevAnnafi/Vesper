@@ -1097,6 +1097,69 @@ LanguageType detect_language(char *filename)
 	}
 }
 
+Tab* create_tab(char *filename)
+{
+	Tab *tab = malloc(sizeof(Tab));
+	if (tab == NULL) 
+	{
+		return NULL;
+	}
+
+	tab->buffer = buffer_create(1024);
+
+	if (filename != NULL)
+	{
+		FILE *fp = fopen(filename, "r");
+
+		if (fp != NULL)
+		{
+			fseek(fp, 0, SEEK_END);
+			long file_size = ftell(fp);
+			fseek(fp, 0, SEEK_SET);
+
+			char *contents = malloc(file_size + 1);
+
+			if (contents != NULL)
+			{
+
+				fread(contents, 1, file_size, fp);
+				contents[file_size] = '\0';
+
+				for (size_t i = 0; i < file_size; i++)
+				{
+					buffer_insert_char(tab->buffer, contents[i]);
+				}
+
+				free(contents);
+			}
+
+			fclose(fp);
+		}
+	}
+
+	tab->cursor_x = 0;
+	tab->cursor_y = 0;
+	tab->row_offset = 0;
+	tab->col_offset = 0;
+
+	tab->language = detect_language(filename);
+
+	tab->undo_manager = undo_manager_create();
+
+	tab->modified = false;
+
+	if (filename != NULL)
+	{
+		tab->filename = strdup(filename);  
+	}
+	else
+	{
+		tab->filename = NULL;  
+	}
+
+	return tab;
+}
+
 void editorLoop(char *filename)
 {
 
